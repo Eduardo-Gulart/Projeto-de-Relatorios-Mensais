@@ -1,0 +1,2 @@
+import {identity,fail} from '@/lib/storage';
+export async function GET(req:Request){try{return Response.json({owner:identity(req)},{headers:{'Cache-Control':'private, no-store'}})}catch(e){return fail(e)}}
