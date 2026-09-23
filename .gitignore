@@ -1,0 +1,7 @@
+# Dados locais e dependencias
+node_modules/
+.wrangler/
+work/
+outputs/
+.env*
+public/exemplo/
