@@ -144,3 +144,16 @@ The portable build runs Vinext directly without a host `timeout` command. The ma
 
 - [vinext Documentation](https://github.com/cloudflare/vinext)
 - [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+
+
+## Acesso da equipe
+
+O modo de equipe é ativado com `RELATA_TEAM_ENABLED=true` e `RELATA_ADMIN_EMAIL` no ambiente do servidor. O administrador é identificado pelo e-mail autenticado, nunca por um campo enviado no formulário. Sem administrador configurado, o modo de equipe bloqueia o acesso.
+
+Aplique a migração `drizzle/0001_team.sql` depois da primeira migração. A migração apenas cria tabelas; não exclui nem transfere os relatórios existentes. No modo de equipe, o administrador vincula as lojas antigas na página `/team`. Integrantes só podem acessar lojas atribuídas ao seu e-mail e precisam estar ativos. A atribuição acompanha o histórico e os prints. Restore de backup é exclusivo do administrador; exportações contêm apenas relatórios acessíveis.
+
+O login hospedado usa a conta ChatGPT. Além do cadastro em Equipe e lojas, a pessoa precisa estar na lista de visitantes autorizados da hospedagem privada. Cadastrar alguém no aplicativo não envia convites nem altera a lista da hospedagem. Não exponha diretamente o servidor de desenvolvimento na internet: ele simula uma identidade local e deve permanecer em localhost.
+
+O banco de dados do computador não é enviado junto com o código. Para levar relatórios ao ambiente online, gere um backup, cadastre as lojas e restaure como administrador. O modo pessoal local permanece disponível enquanto a configuração de equipe não for ativada.
+
+Teste de isolamento com SQLite real: `node scripts/test-team.cjs`.
