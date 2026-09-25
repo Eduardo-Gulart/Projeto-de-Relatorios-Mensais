@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./report.css";
+import "./interface.css";
 
 export const metadata: Metadata = {
   title: "Relata | Relatórios de lojas",
