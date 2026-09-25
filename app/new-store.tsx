@@ -1,0 +1,10 @@
+"use client";
+import {useState,FormEvent} from 'react';
+import {Plus} from 'lucide-react';
+import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
+import type {Session} from '@/lib/use-session';
+export default function NewStore({disabled,onCreated}:{disabled:boolean;onCreated:(store:Session['stores'][number])=>void}){
+ const [open,setOpen]=useState(false),[name,setName]=useState(''),[saving,setSaving]=useState(false),[error,setError]=useState('');
+ async function submit(e:FormEvent){e.preventDefault();if(saving)return;setSaving(true);setError('');try{const res=await fetch('/api/stores',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});const result=await res.json() as {store:Session['stores'][number];error?:string};if(!res.ok)throw new Error(result.error||'Não foi possível cadastrar a loja.');onCreated(result.store);setOpen(false);setName('');}catch(e){setError((e as Error).message)}finally{setSaving(false)}}
+ return <><button type="button" className="text-button new-store-button" disabled={disabled} onClick={()=>{setError('');setOpen(true)}}><Plus size={15}/>Adicionar minha loja</button><Dialog open={open} onOpenChange={v=>{if(!saving)setOpen(v)}}><DialogContent className="new-store-dialog" showCloseButton={!saving}><DialogTitle>Adicionar minha loja</DialogTitle><DialogDescription>Informe o nome da loja. Ela ficará vinculada a você, e o administrador também poderá acompanhar os relatórios.</DialogDescription><form onSubmit={submit}><label>Nome da loja<input autoFocus required maxLength={200} value={name} disabled={saving} onChange={e=>setName(e.target.value)} placeholder="Ex.: Vai Com Dog Matriz"/></label>{error&&<p role="alert" className="notice">{error}</p>}<div className="backup-actions"><button type="button" className="secondary" disabled={saving} onClick={()=>setOpen(false)}>Cancelar</button><button disabled={saving||!name.trim()}>{saving?'Adicionando…':'Adicionar e usar no relatório'}</button></div></form></DialogContent></Dialog></>;
+}

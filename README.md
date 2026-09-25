@@ -157,3 +157,6 @@ O login hospedado usa a conta ChatGPT. Além do cadastro em Equipe e lojas, a pe
 O banco de dados do computador não é enviado junto com o código. Para levar relatórios ao ambiente online, gere um backup, cadastre as lojas e restaure como administrador. O modo pessoal local permanece disponível enquanto a configuração de equipe não for ativada.
 
 Teste de isolamento com SQLite real: `node scripts/test-team.cjs`.
+
+### Cadastro de lojas pela equipe
+Integrantes ativos podem usar **Adicionar minha loja** no campo Loja de um novo relatório. O servidor vincula a loja à conta autenticada; não é necessário cadastro pelo administrador. Cada integrante vê somente suas lojas, e o administrador vê todas. Transferências e gestão de integrantes continuam exclusivas do administrador.
