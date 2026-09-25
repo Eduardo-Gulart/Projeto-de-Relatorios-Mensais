@@ -1,4 +1,5 @@
 "use client";
+import AppNav from '../app-nav';
 import {useEffect,useState} from 'react';
 import {Report,values,money,num,month,variation,fields,issues} from '@/lib/report';
 import './dashboard.css';
@@ -15,7 +16,7 @@ export default function Dashboard(){
  useEffect(()=>{void refresh()},[]);
  const r=reports.find(x=>x.id===selected);const stores=[...new Set(reports.map(x=>x.store))];
  const a=r?values(r,'finance',r.previous):{},b=r?values(r,'finance',r.current):{},s=r?values(r,'sales',r.previous):{},t=r?values(r,'sales',r.current):{},f=r?values(r,'funnel',r.current):{},oldF=r?values(r,'funnel',r.previous):{},q=r?.evidence.find(e=>e.category==='quality')?.values||{};
- return <main className="dashboard"><header className="dash-nav"><a href="/" className="dash-brand">Relata<span>GESTÃO DE LOJAS</span></a><nav><a href="/">Relatórios</a><a href="/dashboard" aria-current="page">Dashboard</a></nav></header><div className="dash-heading"><div><p className="eyebrow">CENTRAL DE DESEMPENHO</p><h1>Resultados que orientam suas ações.</h1><p>Compare resultados e acompanhe os pontos que precisam de atenção.</p></div><button className="secondary" disabled={loading} onClick={refresh}>{loading?'Carregando…':'Atualizar dados'}</button></div>
+ return <main className="dashboard"><AppNav active="dashboard"/><div className="dash-heading"><div><p className="eyebrow">CENTRAL DE DESEMPENHO</p><h1>Desempenho das lojas</h1><p>Compare resultados e acompanhe os pontos que precisam de atenção.</p></div><button className="secondary" disabled={loading} onClick={refresh}>{loading?'Carregando…':'Atualizar dados'}</button></div>
  {error&&<div className="notice" role="alert">{error} {error.includes('Entre na sua conta')&&<a href="/signin-with-chatgpt?return_to=%2Fdashboard">Entrar</a>}</div>}
  {loading&&!r&&<p role="status">Carregando os relatórios salvos…</p>}
  {!loading&&!error&&!r&&<section className="dash-empty"><h2>Seu dashboard começa com um relatório.</h2><p>Salve os dados de uma loja para visualizar seus indicadores aqui.</p><a href="/">Preparar um relatório →</a></section>}
