@@ -30,3 +30,21 @@ button.delete-report{background:#fff0f2;color:#a31d31;border:1px solid #edbcc3}.
  .workspace .heading h1,.dashboard .dash-heading h1{font-size:clamp(1.75rem,2.8vw,2.25rem);line-height:1.2}
  .app-ui .panel,.team-workspace .panel{box-shadow:var(--card-shadow);border-color:var(--line);border-radius:var(--card-radius)}
 }
+
+/* SaaS dashboard palette. Keep report/PDF styling independent. */
+:root {
+ --saas-primary:#820AD1;--saas-primary-hover:#6B0AAC;
+ --saas-purple-bg:#F3E5FC;--saas-purple-text:#4A0785;
+ --saas-coral-bg:#FAECE7;--saas-coral-text:#4A1B0C;
+ --saas-teal-bg:#E1F5EE;--saas-teal-text:#04342C;
+ --saas-pink-bg:#FBEAF0;--saas-pink-text:#4B1528;
+ --saas-amber-bg:#FAEEDA;--saas-amber-text:#412402;
+ --saas-green-bg:#EAF3DE;--saas-green-text:#173404;
+ --saas-red-bg:#FCEBEB;--saas-red-text:#791F1F;
+ --saas-sidebar:#26215C;--saas-sidebar-muted:#CECBF6;
+ --saas-page:#F8F9FC;--saas-surface:#FFFFFF;--saas-soft:#F2F3F7;
+ --saas-text:#242238;--saas-muted:#666276;--saas-line:#E6E4EE;
+ --saas-previous:#C8B1DE;--saas-positive:#17765D;--saas-negative:#B83939;
+ --saas-coral-dot:#C95635;--saas-amber-dot:#A76913;--saas-green-dot:#487A22;
+}
+@media screen {body:has(.dashboard){background:var(--saas-page)}}

@@ -31,6 +31,16 @@ export default function Home(){
  useEffect(()=>{setPdfFile(null);},[r]);
  useEffect(()=>()=>{if(pdfFile)URL.revokeObjectURL(pdfFile.url);},[pdfFile]);
  const persistence=usePersistence(r,setR,dirty,setDirty,busy,setHistory,setMessage,next=>{setSelected(next.evidence[0]?.id||'');setPeriod(next.current)});
+ const dashboardNavigation=useRef(false);
+ useEffect(()=>{
+  if(!persistence.ready||dashboardNavigation.current)return;
+  const id=new URLSearchParams(window.location.search).get('report');if(!id)return;
+  dashboardNavigation.current=true;
+  if(dirty){setMessage('Há um rascunho recuperado nesta aba. Salve ou resolva esse rascunho antes de abrir o relatório solicitado pelo dashboard.');setTab('history');return;}
+  const requested=history.find(item=>item.id===id);
+  if(!requested){setMessage('O relatório solicitado não está disponível para sua conta. Consulte o histórico.');setTab('history');return;}
+  persistence.reset(requested);setR(requested);setSelected(requested.evidence[0]?.id||'');setPeriod(requested.current);setTab('editor');setMessage('Relatório aberto pelo dashboard. Confira os prints e finalize a conferência quando estiver pronto.');
+ },[persistence.ready,history,dirty]);
  useEffect(()=>{const handler=(e:BeforeUnloadEvent)=>{if(dirty){e.preventDefault();e.returnValue='';}};window.addEventListener('beforeunload',handler);return()=>window.removeEventListener('beforeunload',handler)},[dirty]);
  useEffect(()=>{if(!r)return;const ctx=(document as unknown as {modelContext?:{registerTool:(tool:unknown,opts:unknown)=>Promise<void>}}).modelContext;if(!ctx)return;const c=new AbortController();Promise.resolve(ctx.registerTool({name:'read_current_report',description:'Lê os dados e as pendências do relatório exibido, sem alterá-lo.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true,untrustedContentHint:true},execute:(v:unknown)=>{if(!v||typeof v!=='object'||Object.keys(v).length)throw new Error('Use um objeto vazio.');return {store:r.store,previous:r.previous,current:r.current,pending:issues(r),evidence:r.evidence.map(e=>({category:e.category,period:e.period,values:e.values,confirmed:e.confirmed}))};}},{signal:c.signal})).catch(()=>{});return()=>c.abort();},[r]);
  if(accessError)return <main className="workspace"><h1>Acesso ao Relata</h1><p role="alert">{accessError}</p><a href="/signin-with-chatgpt?return_to=/">Entrar com minha conta</a></main>;
