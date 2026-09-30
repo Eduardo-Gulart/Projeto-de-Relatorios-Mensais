@@ -48,3 +48,63 @@ button.delete-report{background:#fff0f2;color:#a31d31;border:1px solid #edbcc3}.
  --saas-coral-dot:#C95635;--saas-amber-dot:#A76913;--saas-green-dot:#487A22;
 }
 @media screen {body:has(.dashboard){background:var(--saas-page)}}
+
+/* Report workspace: screen controls only. Never style the report-document. */
+@media screen {
+ body:has(.reports-ui){background:var(--saas-page)}
+ .workspace .reports-ui{--primary:var(--saas-primary);--ring:var(--saas-primary);color:var(--saas-text)}
+ .workspace .reports-ui .app-nav{border-color:var(--saas-line)}
+ .workspace .reports-ui .app-logo>span{background:var(--saas-primary)}
+ .workspace .reports-ui .app-nav nav a{color:var(--saas-muted)}
+ .workspace .reports-ui .app-nav nav a:hover{background:var(--saas-purple-bg);color:var(--saas-primary-hover)}
+ .workspace .reports-ui .app-nav nav a[aria-current=page]{background:var(--saas-purple-bg);color:var(--saas-purple-text)}
+ .workspace .reports-ui .dashboard-link{color:var(--saas-primary);border-color:var(--saas-purple-bg)}
+ .workspace .reports-ui .heading h1{font-size:22px;line-height:1.35;letter-spacing:-.5px}
+ .workspace .reports-ui .heading p:last-child,.workspace .reports-ui .eyebrow{color:var(--saas-muted)}
+ .workspace .reports-ui .toolbar{border-color:var(--saas-line);gap:16px;flex-wrap:wrap}
+ .workspace .reports-ui .toolbar [role=tablist]{background:var(--saas-soft);border:1px solid var(--saas-line);padding:4px;gap:4px;border-radius:14px;flex-wrap:wrap;height:auto}
+ .workspace .reports-ui .toolbar [role=tab]{color:var(--saas-muted);background:transparent;border-radius:10px;box-shadow:none;padding:10px 14px}
+ .workspace .reports-ui .toolbar [role=tab][data-state=active]{background:var(--saas-purple-bg);color:var(--saas-purple-text);font-weight:600;box-shadow:none}
+ .workspace .reports-ui button:not(.secondary):not(.picker):not(.text-button):not(.evidence-item):not(.delete-report):not([role]){background:var(--saas-primary);color:var(--saas-surface);padding:9px 18px;border-radius:12px;min-height:42px;box-shadow:none}
+ .workspace .reports-ui button:not(.secondary):not(.picker):not(.text-button):not(.evidence-item):not(.delete-report):not([role]):hover:not(:disabled){background:var(--saas-primary-hover)}
+ .workspace .reports-ui button.secondary,.workspace .reports-ui a.secondary{background:var(--saas-surface);color:var(--saas-text);border:1px solid var(--saas-line);border-radius:12px;box-shadow:none;padding:9px 18px;min-height:42px}
+ .workspace .reports-ui a.secondary{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+ .workspace .reports-ui button.secondary:hover:not(:disabled),.workspace .reports-ui a.secondary:hover{background:var(--saas-soft);border-color:var(--saas-line)}
+ .workspace .reports-ui .text-button{background:transparent;color:var(--saas-purple-text)}
+ .workspace .reports-ui :is(button,a,input,textarea,summary):focus-visible{outline:3px solid var(--saas-primary);outline-offset:3px}
+ .workspace .reports-ui :is(input,textarea):focus{outline-color:var(--saas-primary)}
+ .workspace .reports-ui .panel{background:var(--saas-surface);border:1px solid var(--saas-line);border-radius:16px;box-shadow:none;padding:24px;margin-top:24px}
+ .workspace .reports-ui .stats article,.workspace .reports-ui .stats article:first-child{background:var(--saas-surface);border:1px solid var(--saas-line);border-radius:12px;box-shadow:none;padding:22px}
+ .workspace .reports-ui .stats strong{font-size:24px;line-height:1.35}
+ .workspace .reports-ui .strategy-groups fieldset{background:var(--saas-surface);border-color:var(--saas-line);border-radius:12px}
+ .workspace .reports-ui .preview-toolbar{flex-wrap:wrap;gap:12px}
+ @media(max-width:760px){.workspace .reports-ui .panel{padding:20px}.workspace .reports-ui .toolbar [role=tablist]{width:100%}.workspace .reports-ui .toolbar [role=tab]{flex:1 1 calc(50% - 4px);white-space:normal}.workspace .reports-ui .preview-toolbar{align-items:stretch}.workspace .reports-ui .preview-toolbar>button,.workspace .reports-ui .preview-toolbar>a.secondary{width:100%}}
+}
+
+@media screen {
+ .workspace .reports-ui .badge{background:var(--saas-purple-bg);color:var(--saas-purple-text);border-radius:8px;font-size:12px;padding:7px 10px}
+ .workspace .reports-ui .classification-option{background:var(--saas-surface);color:var(--saas-text);border:1px solid var(--saas-line);border-radius:12px}
+ .workspace .reports-ui .classification-option.active{background:var(--saas-purple-bg);color:var(--saas-purple-text);border-color:var(--saas-primary)}
+ .workspace .reports-ui .classification-option.active:has(input[value="Excelente"]){background:var(--saas-green-bg);color:var(--saas-green-text);border-color:var(--saas-green-text)}
+ .workspace .reports-ui .classification-option.active:has(input[value="Precisa de atenção"]){background:var(--saas-red-bg);color:var(--saas-red-text);border-color:var(--saas-red-text)}
+ .workspace .reports-ui .classification-option input,.workspace .reports-ui .strategy-option input{accent-color:var(--saas-primary)}
+ .workspace .reports-ui .classification-option:focus-within{outline:3px solid var(--saas-primary);outline-offset:3px}
+ .workspace .reports-ui .evidence-item{background:transparent;color:var(--saas-muted);border:1px solid transparent;border-radius:12px}
+ .workspace .reports-ui .evidence-item:hover{background:var(--saas-soft)}
+ .workspace .reports-ui .evidence-item.selected{background:var(--saas-purple-bg);color:var(--saas-purple-text);border-color:var(--saas-primary)}
+ .workspace .reports-ui .evidence-item.selected>svg{color:var(--saas-primary)}
+ .workspace .reports-ui [data-slot=progress]{background:var(--saas-purple-bg)}
+ .workspace .reports-ui [data-slot=progress-indicator]{background:var(--saas-primary)}
+ .workspace .reports-ui [role=checkbox][data-state=checked]{background:var(--saas-primary);border-color:var(--saas-primary);color:var(--saas-surface)}
+ .workspace .reports-ui .confirm{background:var(--saas-green-bg);color:var(--saas-green-text);border-color:var(--saas-green-bg);border-radius:12px}
+ .workspace .reports-ui .notice,.reports-dialog .notice{background:var(--saas-surface);color:var(--saas-text);border:1px solid var(--saas-line);border-left:4px solid var(--saas-primary);border-radius:12px;padding:14px 18px;line-height:1.7;font-size:14px;box-shadow:none}
+ .workspace .reports-ui .notice-warning,.workspace .reports-ui .month-close-banner{background:var(--saas-amber-bg);color:var(--saas-amber-text);border-color:var(--saas-amber-bg);border-left-color:var(--saas-amber-text)}
+ .workspace .reports-ui .notice-error,.workspace .reports-ui .notice[role=alert],.reports-dialog .notice-error{background:var(--saas-red-bg);color:var(--saas-red-text);border-color:var(--saas-red-bg);border-left-color:var(--saas-red-text)}
+ .workspace .reports-ui button.delete-report{background:var(--saas-red-bg);color:var(--saas-red-text);border:1px solid var(--saas-red-bg);border-radius:12px}
+ .workspace .reports-ui button.delete-report:hover:not(:disabled){border-color:var(--saas-red-text)}
+ .reports-dialog{border:1px solid var(--saas-line);border-radius:16px;background:var(--saas-surface);box-shadow:none}
+ .reports-dialog button:not(.secondary){background:var(--saas-primary);color:var(--saas-surface);border-radius:12px}
+ .reports-dialog button:not(.secondary):hover:not(:disabled){background:var(--saas-primary-hover)}
+ .reports-dialog :is(button,a):focus-visible{outline:3px solid var(--saas-primary);outline-offset:3px}
+}
+@media screen{.workspace .reports-ui .app-nav nav a[href="/dashboard"]{color:var(--saas-primary)}}
