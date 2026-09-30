@@ -1,40 +1,20 @@
-export type Category = 'finance'|'sales'|'funnel'|'quality';
-
-export const labels:Record<Category,string>={finance:'Financeiro',sales:'Vendas',funnel:'Conversão do cardápio',quality:'Qualidade operacional'};
-
-export const fields:Record<Category,[string,string][]>= {
-
-finance:[['gross','Vendas brutas'],['fees','Taxas e comissões'],['promotions','Serviços e promoções'],['adjustments','Ajustes'],['net','Faturamento líquido']],
-
-sales:[['orders','Total de pedidos'],['salesValue','Valor total das vendas'],['ticket','Ticket médio'],['newCustomers','Novos clientes']],
-
-funnel:[['visits','Visitas'],['views','Visualizações'],['bag','Adições à sacola'],['review','Revisões do pedido'],['completed','Concluídos']],
-
-quality:[['rating','Avaliações'],['cancellations','Cancelamentos (%)'],['calls','Pedidos com chamados (%)']]};
-
-export type Evidence={id:string;name:string;url:string;category:Category;period:string;values:Record<string,number|null>;text:string;confirmed:boolean;example?:boolean};
-
-export type Report={id:string;storeId?:string;store:string;client:string;manager:string;started:string;previous:string;current:string;qualityPeriod:string;strategies:string;classification:string;evidence:Evidence[];targets:Record<string,number>;status:'draft'|'reviewed';updated?:string};
-
-export const money=(n:number|null|undefined)=>n==null?'—':n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-
-export const num=(n:number|null|undefined)=>n==null?'—':n.toLocaleString('pt-BR',{maximumFractionDigits:2});
-
-export const month=(p:string)=>/^\d{4}-\d{2}$/.test(p)?new Date(p+'-02T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):p||'Período não informado';
-
-export function variation(a:number|null|undefined,b:number|null|undefined){return a==null||b==null||a===0?null:(b-a)/a*100;}
-
-export function values(r:Report,category:Category,period:string){return r.evidence.find(e=>e.category===category&&e.period===period)?.values||{};}
-
-export function blank():Report{return {id:crypto.randomUUID(),store:'',client:'',manager:'Eduardo',started:'',previous:'2026-07',current:'2026-08',qualityPeriod:'',strategies:'',classification:'',evidence:[],targets:{views:55,bag:25,review:24,completed:20,rating:4.7,cancellations:1,calls:2.5},status:'draft'};}
-
-export function example():Report{const r=blank();r.store='Loja demonstrativa';r.manager='';return r;}
-
-export function issues(r:Report){const result:string[]=numericIssues(r);if(!r.store.trim())result.push('Informe o nome da loja.');if(!r.previous||!r.current||r.previous>=r.current)result.push('Selecione dois meses em ordem cronológica.');for(const category of ['finance','sales','funnel'] as Category[])for(const period of [r.previous,r.current]){const matches=r.evidence.filter(e=>e.category===category&&e.period===period);if(matches.length!==1)result.push(`${labels[category]} · ${month(period)}: envie exatamente um print.`);}if(r.evidence.filter(e=>e.category==='quality').length!==1)result.push('Envie um print de qualidade operacional.');if(!r.qualityPeriod.trim())result.push('Confirme o período da qualidade operacional.');if(r.evidence.some(e=>!e.confirmed))result.push('Confira os dados e confirme cada print.');if(r.evidence.some(e=>fields[e.category].some(([key])=>e.values[key]==null)))result.push('Preencha os indicadores não reconhecidos.');return result;}
-
-
-
-export function numericIssues(r:Report){const problems:string[]=[];for(const e of r.evidence){for(const [key,value] of Object.entries(e.values)){if(value==null)continue;if(!Number.isFinite(value)){problems.push('Há um valor numérico inválido.');continue;}if(e.category!=='finance'&&value<0)problems.push(`${labels[e.category]}: os valores não podem ser negativos.`);if(e.category==='funnel'&&(!Number.isInteger(value)||(key!=='visits'&&e.values.visits!=null&&value>e.values.visits)))problems.push('Confira as contagens do funil.');if(e.category==='sales'&&['orders','newCustomers'].includes(key)&&!Number.isInteger(value))problems.push('Pedidos e clientes devem ser números inteiros.');if(e.category==='quality'&&value>(key==='rating'?5:100))problems.push('Confira a escala dos indicadores de qualidade.');}if(e.category==='finance'&&fields.finance.every(([key])=>e.values[key]!=null)){const v=e.values;if(Math.abs(v.gross!+v.fees!+v.promotions!+v.adjustments!-v.net!)>.02)problems.push('O faturamento líquido não corresponde à soma do financeiro. Confira os valores e os sinais.');}}return [...new Set(problems)];}
-
-
-
+export type Category = 'finance'|'sales'|'funnel'|'quality';
+export const labels:Record<Category,string>={finance:'Financeiro',sales:'Vendas',funnel:'Conversão do cardápio',quality:'Qualidade operacional'};
+export const fields:Record<Category,[string,string][]>= {
+finance:[['gross','Vendas brutas'],['fees','Taxas e comissões'],['promotions','Serviços e promoções'],['adjustments','Ajustes'],['net','Faturamento líquido']],
+sales:[['orders','Total de pedidos'],['salesValue','Valor total das vendas'],['ticket','Ticket médio'],['newCustomers','Novos clientes']],
+funnel:[['visits','Visitas'],['views','Visualizações'],['bag','Adições à sacola'],['review','Revisões do pedido'],['completed','Concluídos']],
+quality:[['rating','Avaliações'],['cancellations','Cancelamentos (%)'],['calls','Pedidos com chamados (%)']]};
+export type Evidence={id:string;name:string;url:string;category:Category;period:string;values:Record<string,number|null>;text:string;confirmed:boolean;example?:boolean};
+export type Report={id:string;storeId?:string;store:string;client:string;manager:string;started:string;previous:string;current:string;qualityPeriod:string;strategies:string;classification:string;evidence:Evidence[];targets:Record<string,number>;status:'draft'|'reviewed';updated?:string};
+export const money=(n:number|null|undefined)=>n==null?'—':n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+export const num=(n:number|null|undefined)=>n==null?'—':n.toLocaleString('pt-BR',{maximumFractionDigits:2});
+export const month=(p:string)=>/^\d{4}-\d{2}$/.test(p)?new Date(p+'-02T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):p||'Período não informado';
+export function variation(a:number|null|undefined,b:number|null|undefined){return a==null||b==null||a===0?null:(b-a)/a*100;}
+export function values(r:Report,category:Category,period:string){return r.evidence.find(e=>e.category===category&&e.period===period)?.values||{};}
+export function blank():Report{return {id:crypto.randomUUID(),store:'',client:'',manager:'Eduardo',started:'',previous:'2026-07',current:'2026-08',qualityPeriod:'',strategies:'',classification:'',evidence:[],targets:{views:55,bag:25,review:24,completed:20,rating:4.7,cancellations:1,calls:2.5},status:'draft'};}
+export function example():Report{const r=blank();r.store='Loja demonstrativa';r.manager='';return r;}
+export function issues(r:Report){const result:string[]=numericIssues(r);if(!r.store.trim())result.push('Informe o nome da loja.');if(!r.previous||!r.current||r.previous>=r.current)result.push('Selecione dois meses em ordem cronológica.');for(const category of ['finance','sales','funnel'] as Category[])for(const period of [r.previous,r.current]){const matches=r.evidence.filter(e=>e.category===category&&e.period===period);if(matches.length!==1)result.push(`${labels[category]} · ${month(period)}: envie exatamente um print.`);}if(r.evidence.filter(e=>e.category==='quality').length!==1)result.push('Envie um print de qualidade operacional.');if(!r.qualityPeriod.trim())result.push('Confirme o período da qualidade operacional.');if(r.evidence.some(e=>!e.confirmed))result.push('Confira os dados e confirme cada print.');if(r.evidence.some(e=>fields[e.category].some(([key])=>e.values[key]==null)))result.push('Preencha os indicadores não reconhecidos.');return result;}
+
+export function numericIssues(r:Report){const problems:string[]=[];for(const e of r.evidence){for(const [key,value] of Object.entries(e.values)){if(value==null)continue;if(!Number.isFinite(value)){problems.push('Há um valor numérico inválido.');continue;}if(e.category!=='finance'&&value<0)problems.push(`${labels[e.category]}: os valores não podem ser negativos.`);if(e.category==='funnel'&&(!Number.isInteger(value)||(key!=='visits'&&e.values.visits!=null&&value>e.values.visits)))problems.push('Confira as contagens do funil.');if(e.category==='sales'&&['orders','newCustomers'].includes(key)&&!Number.isInteger(value))problems.push('Pedidos e clientes devem ser números inteiros.');if(e.category==='quality'&&value>(key==='rating'?5:100))problems.push('Confira a escala dos indicadores de qualidade.');}if(e.category==='finance'&&fields.finance.every(([key])=>e.values[key]!=null)){const v=e.values;if(Math.abs(v.gross!+v.fees!+v.promotions!+v.adjustments!-v.net!)>.02)problems.push('O faturamento líquido não corresponde à soma do financeiro. Confira os valores e os sinais.');}}return [...new Set(problems)];}
+
