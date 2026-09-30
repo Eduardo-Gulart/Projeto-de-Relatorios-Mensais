@@ -19,3 +19,14 @@ fieldset{border:0;padding:0;margin:0;min-width:0}
 .toolbar [role="tablist"]{height:auto;background:#e9edf3;padding:4px;border-radius:10px;gap:4px}.toolbar [role="tab"]{background:transparent;color:#526177;padding:10px 13px;font-size:14px;min-height:42px}.toolbar [role="tab"][data-state="active"]{background:white;color:#a31d31;box-shadow:0 1px 4px #17203318;font-weight:700}.backup-actions a.secondary{display:inline-flex;align-items:center;min-height:44px;padding:10px 16px;border:1px solid #cdd5e0;border-radius:8px;background:white;color:#172033;text-decoration:none}.backup-panel .notice{overflow-wrap:anywhere}
 
 button.delete-report{background:#fff0f2;color:#a31d31;border:1px solid #edbcc3}.delete-confirmation{max-width:520px!important;background:white;padding:26px}.delete-confirmation h2{margin:0;font-size:23px}.delete-confirmation p{line-height:1.7}.delete-confirmation strong{color:#172033}
+
+/* Shared screen palette; report typography and PDF layout stay independent. */
+:root{--brand:#c92339;--brand-ink:#a31d31;--brand-soft:#fff0f2;--surface:#fff;--canvas:#f5f7fa;--surface-muted:#f0f3f7;--text-main:#202b3c;--text-secondary:#526177;--line:#dce2ea;--positive:#14633f;--positive-soft:#e9f5ee;--attention:#8a3d0b;--attention-soft:#fff1e4;--negative:#b42336;--negative-soft:#ffedf0;--card-shadow:0 3px 14px #17203308;--card-radius:16px}
+@media screen{
+ body{background:var(--canvas);color:var(--text-main)}
+ .app-nav .app-logo>span{background:var(--brand)}
+ .app-nav nav a[aria-current=page]{color:var(--brand-ink);background:var(--brand-soft)}
+ .app-nav .app-account small,.app-ui .save-status,.workspace .eyebrow,.dashboard .eyebrow{color:var(--text-secondary)}
+ .workspace .heading h1,.dashboard .dash-heading h1{font-size:clamp(1.75rem,2.8vw,2.25rem);line-height:1.2}
+ .app-ui .panel,.team-workspace .panel{box-shadow:var(--card-shadow);border-color:var(--line);border-radius:var(--card-radius)}
+}

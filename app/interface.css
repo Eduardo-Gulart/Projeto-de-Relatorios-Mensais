@@ -1,6 +1,6 @@
 /* Screen-only workspace design. PDF styles remain independent. */
 @media screen {
- :root{--background:#f7f8fa;--foreground:#202632;--primary:#bd2940;--ring:#bd2940;--border:#e4e7ec;--input:#dce1e8;--muted:#f1f3f6;--muted-foreground:#626d7e;--radius:.75rem}
+ :root{--background:#f7f8fa;--foreground:#202632;--primary:var(--brand);--ring:var(--brand);--border:#e4e7ec;--input:#dce1e8;--muted:#f1f3f6;--muted-foreground:#626d7e;--radius:.75rem}
  body{font-family:Inter,"Segoe UI",Arial,sans-serif;-webkit-font-smoothing:antialiased}
  .workspace,.dashboard{max-width:1376px;padding:0 40px 64px}
  .app-nav{display:flex;align-items:center;gap:32px;min-height:88px;padding:18px 0;border-bottom:1px solid #e4e7ec;font-size:14px;font-weight:500;flex-wrap:wrap}
