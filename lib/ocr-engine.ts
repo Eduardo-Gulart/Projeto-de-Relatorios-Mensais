@@ -18,7 +18,8 @@ export function parseOCR(text:string,category:Category){
  const result:Record<string,number|null>=Object.fromEntries(fields[category].map(([k])=>[k,null]));
  const lines=text.split('\n').map(s=>s.trim()).filter(Boolean);
  if(category==='finance'){
-  const segments=text.split(/(?=[+-]?R\s*\$)/).filter(s=>/^[+-]?R\s*\$/.test(s));
+  const normalized=text.replace(/[−–—]/g,'-');const starts=[...normalized.matchAll(/[+-]?\s*R\s*\$/g)].map(m=>m.index!);
+  const segments=starts.map((start,i)=>normalized.slice(start,starts[i+1]));
   // Duplicate currency mentions are ambiguous; leave those to spatial extraction.
   if(segments.length===5)segments.forEach((s,i)=>result[fields.finance[i][0]]=parseField(s,category,fields.finance[i][0]));
  }else if(category==='sales'){

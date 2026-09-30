@@ -30,3 +30,5 @@
 }
 
 @media screen{.new-store-button{margin-top:5px;font-size:13px!important;min-height:32px!important}.new-store-dialog{background:white;padding:28px;border-radius:14px}.new-store-dialog h2{margin:0;font-size:23px}.new-store-dialog form{margin-top:8px}.new-store-dialog .backup-actions{justify-content:flex-end;margin-bottom:0}.new-store-dialog button{font-size:14px}.new-store-dialog input{min-height:44px}}
+
+.month-close-banner{display:flex;gap:14px;align-items:flex-start}.month-close-banner>svg{flex-shrink:0;margin-top:3px}.month-close-banner p{margin:5px 0 0}
