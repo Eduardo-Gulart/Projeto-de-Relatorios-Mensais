@@ -411,3 +411,152 @@
   width: 52px;
   height: 52px;
 }
+.report-document .rv2-page .rv2-small-kpis {
+  margin-bottom: 28px;
+}
+.report-document .rv2-page .rv2-small-kpis .rv2-value {
+  font-size: 36px;
+}
+.report-document .rv2-page .rv2-small-kpis .rv2-kpi {
+  min-height: 110px;
+}
+.report-document .rv2-page .rv2-two-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin-top: 24px;
+}
+.report-document .rv2-page .rv2-two-columns .rv2-insights {
+  margin: 0;
+  font-size: 12px;
+}
+.report-document .rv2-page .rv2-two-columns .rv2-insights > div {
+  grid-template-columns: 65px 1fr;
+  padding: 10px 0;
+}
+.report-document .rv2-page .rv2-two-columns .rv2-insights dd {
+  font-size: 12px;
+}
+.report-document .rv2-page .rv2-chart {
+  margin: 16px 0 24px;
+}
+.report-document .rv2-page .rv2-chart-bars {
+  height: 188px;
+  display: flex;
+  gap: 8px;
+  position: relative;
+}
+.report-document .rv2-page .rv2-chart-column {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 7px;
+  text-align: center;
+  font:
+    400 9px/1.3 "Relata Mono",
+    monospace;
+}
+.report-document .rv2-page .rv2-chart-column > span:last-child {
+  height: 35px;
+}
+.report-document .rv2-page .rv2-chart-track {
+  height: 118px;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  border-bottom: 1px solid var(--report-line);
+}
+.report-document .rv2-page .rv2-chart-track > div {
+  width: 80%;
+  background: var(--report-bar);
+}
+.report-document .rv2-page .rv2-chart-track > div.rv2-current {
+  background: var(--report-amber);
+}
+.report-document .rv2-page .rv2-average {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 2px solid var(--report-dark);
+  pointer-events: none;
+}
+.report-document .rv2-page .rv2-chart-legend {
+  font:
+    400 10px/1.5 "Relata Mono",
+    monospace;
+  margin-top: 7px;
+  color: var(--report-muted);
+}
+.report-document .rv2-page .rv2-quality-bars {
+  display: grid;
+  gap: 18px;
+  margin: 26px 0;
+}
+.report-document .rv2-page .rv2-quality-track {
+  height: 13px;
+  background: var(--report-line);
+  position: relative;
+  margin: 8px 0;
+}
+.report-document .rv2-page .rv2-quality-track > div {
+  height: 100%;
+}
+.report-document .rv2-page .rv2-quality-track > span {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  border-left: 2px solid var(--report-dark);
+}
+.report-document .rv2-page .rv2-good-bar {
+  background: var(--report-positive);
+}
+.report-document .rv2-page .rv2-bad-bar {
+  background: var(--report-negative);
+}
+.report-document .rv2-page .rv2-cost-kpis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin: 22px 0 30px;
+}
+.report-document .rv2-page .rv2-cost-number {
+  font:
+    800 44px/1.2 "Relata Display",
+    sans-serif;
+}
+.report-document .rv2-page .rv2-waterfall > div {
+  display: grid;
+  grid-template-columns: 150px 1fr 110px;
+  gap: 12px;
+  align-items: center;
+  margin: 12px 0;
+}
+.report-document .rv2-page .rv2-waterfall-track {
+  height: 24px;
+  background: var(--report-track);
+  position: relative;
+}
+.report-document .rv2-page .rv2-waterfall-track > div {
+  height: 100%;
+  position: absolute;
+  background: var(--report-bar);
+}
+.report-document .rv2-page .rv2-waterfall-track > .rv2-current {
+  background: var(--report-amber);
+}
+.report-document .rv2-page .rv2-waterfall strong {
+  font-size: 12px;
+  text-align: right;
+}
+.report-document .rv2-page .rv2-cost-ratio {
+  margin-top: 24px;
+}
+.report-document .rv2-page .rv2-cost-ratio strong {
+  font:
+    800 44px/1 "Relata Display",
+    sans-serif;
+  color: var(--report-amber);
+}
