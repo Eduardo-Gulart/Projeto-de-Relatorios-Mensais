@@ -9,5 +9,5 @@ export const defaultBranding = {
   ],
   closing: { text: "TODO MÊS, UMA OPERAÇÃO", highlight: "MELHOR." },
   source: "Prints do Portal do Parceiro iFood",
-} as const;
+};
 export type ReportBranding = typeof defaultBranding;

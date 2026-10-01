@@ -193,16 +193,14 @@ export async function downloadReport(filename: string) {
         });
         if (!first) pdf.addPage();
         first = false;
-        pdf.addImage(
-          canvas.toDataURL("image/jpeg", 0.92),
-          "JPEG",
-          0,
-          0,
-          210,
-          297,
-          undefined,
-          "FAST",
-        );
+        const pageBudget =
+          2_800_000 / root.querySelectorAll(".report-page").length;
+        let image = canvas.toDataURL("image/jpeg", 0.92);
+        for (const quality of [0.86, 0.8, 0.74, 0.68, 0.58, 0.48]) {
+          if (image.length * 0.75 <= pageBudget) break;
+          image = canvas.toDataURL("image/jpeg", quality);
+        }
+        pdf.addImage(image, "JPEG", 0, 0, 210, 297, undefined, "FAST");
         continue;
       }
       const head = page.querySelector<HTMLElement>(".report-running-head");

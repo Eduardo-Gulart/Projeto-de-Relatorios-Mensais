@@ -192,15 +192,24 @@ export function QualityPage({ r, page }: { r: Report; page: number }) {
           <KpiCell
             key={key}
             label={label}
+            tone={
+              !valid.some((v) => v.key === key)
+                ? "neutral"
+                : valid.find((v) => v.key === key)?.good
+                  ? "positive"
+                  : "negative"
+            }
             value={finite(q[key]) ? decimal(q[key]!) : null}
             suffix={key === "rating" ? "" : "%"}
             detail={
               finite(r.targets[key]) ? (
                 <span
                   className={
-                    valid.find((v) => v.key === key)?.good
-                      ? "rv2-positive"
-                      : "rv2-negative"
+                    !valid.some((v) => v.key === key)
+                      ? "rv2-neutral"
+                      : valid.find((v) => v.key === key)?.good
+                        ? "rv2-positive"
+                        : "rv2-negative"
                   }
                 >
                   Meta {key === "rating" ? "≥" : "≤"} {decimal(r.targets[key])}
@@ -266,13 +275,14 @@ export function CostsPage({ r, page }: { r: Report; page: number }) {
   const f = values(r, "finance", r.current),
     a = values(r, "finance", r.previous),
     all = fields.finance.every(([key]) => finite(f[key]));
-  let running = 0;
-  const rows = fields.finance.map(([key, label]) => {
+  const rows = fields.finance.map(([key, label], index) => {
+    const running = fields.finance
+      .slice(0, index)
+      .reduce((sum, [k]) => sum + (f[k] ?? 0), 0);
     const value = f[key];
     if (!finite(value)) return { key, label, value: null, start: 0, end: 0 };
     const start = key === "gross" || key === "net" ? 0 : running,
       end = key === "gross" || key === "net" ? value : running + value;
-    running = end;
     return { key, label, value, start, end };
   });
   const low = Math.min(0, ...rows.flatMap((x) => [x.start, x.end])),

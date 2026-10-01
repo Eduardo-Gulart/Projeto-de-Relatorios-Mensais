@@ -334,9 +334,9 @@
 .report-document .rv2-page .rv2-funnel-track strong {
   position: absolute;
   left: 8px;
-  top: 5px;
+  top: 0;
   font:
-    800 29px/1 "Relata Display",
+    600 24px/1.4 "Relata Sans",
     sans-serif;
   color: #111;
   background: #f3f2ee;
@@ -372,7 +372,7 @@
 }
 .report-document .rv2-page .rv2-hero-number {
   font:
-    800 72px/1.15 "Relata Display",
+    800 64px/1.4 "Relata Display",
     sans-serif;
   color: var(--report-amber);
 }
@@ -631,4 +631,21 @@
   color: var(--report-muted);
   margin-bottom: 8px;
   text-transform: uppercase;
+}
+.report-document .rv2-page:has(.rv2-quality-bars) .rv2-quality-bars {
+  margin: 18px 0;
+  gap: 12px;
+}
+.report-document .rv2-page:has(.rv2-quality-bars) .rv2-insights {
+  margin: 16px 0;
+}
+.report-document .rv2-page:has(.rv2-quality-bars) .rv2-insights > div {
+  padding: 9px 0;
+}
+.report-document .rv2-page:has(.rv2-quality-bars) .rv2-two-columns {
+  margin-top: 16px;
+}
+.report-document .rv2-page .rv2-quality-track > span,
+.report-document .rv2-page .rv2-target-mark {
+  transform: translateX(-2px);
 }

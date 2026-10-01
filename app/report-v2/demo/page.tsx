@@ -1,33 +1,29 @@
 "use client";
 import { useState } from "react";
 import { downloadReport } from "@/lib/download";
-import {
-  DarkCallout,
-  Delta,
-  DisplayTitle,
-  EditorialPage,
-  Eyebrow,
-  KpiCell,
-  Rule,
-} from "../components";
-
+import { editorialFixture } from "@/lib/editorial-fixtures";
+import ReportPreview from "../../report-preview";
 export default function EditorialDemo() {
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  async function exportDemo() {
+  const [mode, setMode] = useState<"complete" | "missing" | "long">("complete"),
+    [classic, setClassic] = useState(false),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false);
+  const { r, reports } = editorialFixture(mode);
+  if (classic) r.layout = "classic";
+  async function download() {
     setBusy(true);
     setError("");
     try {
-      const result = await downloadReport("Relata - demonstração editorial");
+      const result = await downloadReport(
+        `Relata-${mode}-${classic ? "classic" : "editorial"}`,
+      );
       const a = document.createElement("a");
       a.href = result.url;
       a.download = result.filename;
       a.click();
       setTimeout(() => URL.revokeObjectURL(result.url), 60000);
     } catch (e) {
-      setError(
-        e instanceof Error ? e.message : "Não foi possível gerar o PDF.",
-      );
+      setError(e instanceof Error ? e.message : "Falha ao gerar PDF.");
     } finally {
       setBusy(false);
     }
@@ -35,83 +31,46 @@ export default function EditorialDemo() {
   return (
     <div className="app-ui rv2-demo">
       <div className="rv2-demo-toolbar">
-        <h1>Prévia editorial · fase A</h1>
+        <h1>Relatório editorial</h1>
         <p>
-          Demonstração com dados inteiramente fictícios. O relatório atual
-          continua disponível na tela principal.
+          Modelos de validação com dados inteiramente fictícios. Não alteram
+          seus relatórios salvos.
         </p>
-        <button disabled={busy} onClick={exportDemo}>
-          {busy ? "Gerando…" : "Baixar demonstração em PDF"}
-        </button>{" "}
-        {/* Full navigation isolates the demonstration from the editing session. */}
+        <div className="backup-actions">
+          {(["complete", "missing", "long"] as const).map((v) => (
+            <button
+              key={v}
+              className="secondary"
+              aria-pressed={mode === v}
+              disabled={busy}
+              onClick={() => setMode(v)}
+            >
+              {
+                {
+                  complete: "Completo",
+                  missing: "Sem histórico e metas",
+                  long: "Textos longos e anexo",
+                }[v]
+              }
+            </button>
+          ))}
+          <button
+            className="secondary"
+            disabled={busy}
+            aria-pressed={classic}
+            onClick={() => setClassic(!classic)}
+          >
+            {classic ? "Usar editorial" : "Testar clássico"}
+          </button>
+          <button disabled={busy} onClick={download}>
+            {busy ? "Gerando…" : "Baixar demonstração em PDF"}
+          </button>
+        </div>
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a href="/">Voltar ao sistema</a>
         {error && <p role="alert">{error}</p>}
       </div>
-      <div className="rv2-demo-scroll">
-        <div className="report-document">
-          <EditorialPage
-            store="Loja demonstração"
-            period="JANEIRO 2026"
-            page={2}
-            source="DADOS FICTÍCIOS · DEMONSTRAÇÃO VISUAL"
-          >
-            <Eyebrow>Resumo executivo</Eyebrow>
-            <DisplayTitle>
-              O mês em
-              <br />
-              60 segundos
-            </DisplayTitle>
-            <Rule />
-            <div className="rv2-kpis">
-              <KpiCell
-                label="Faturamento líquido"
-                value="32,8"
-                prefix="R$ "
-                suffix=" mil"
-                detail={
-                  <Delta value={25}>25,0% · +R$ 6.560 vs. anterior</Delta>
-                }
-              />
-              <KpiCell
-                label="Pedidos"
-                value="820"
-                detail={<Delta value={20}>20,0% vs. mês anterior</Delta>}
-              />
-              <KpiCell
-                label="Ticket médio"
-                value="40,00"
-                prefix="R$ "
-                detail={<Delta value={4.2}>4,2% vs. mês anterior</Delta>}
-              />
-              <KpiCell
-                label="Conversão do cardápio"
-                value="20,0"
-                suffix="%"
-                detail={<Delta value={2}>2,0 p.p. vs. mês anterior</Delta>}
-              />
-              <KpiCell
-                label="Novos clientes"
-                value="240"
-                detail={<Delta value={-4}>4,0% vs. mês anterior</Delta>}
-              />
-              <KpiCell
-                label="Avaliação"
-                value="4,8"
-                detail={<span className="rv2-label">Meta ≥ 4,7</span>}
-              />
-            </div>
-            <DarkCallout label="Diagnóstico do mês">
-              <p>
-                Neste exemplo fictício, o faturamento líquido chegou a{" "}
-                <strong>R$ 32,8 mil</strong>. O crescimento dos pedidos
-                acompanha a melhora da conversão do cardápio. A avaliação atende
-                à meta; a aquisição de novos clientes merece acompanhamento.
-              </p>
-            </DarkCallout>
-          </EditorialPage>
-        </div>
-      </div>
+      <ReportPreview r={r} reports={reports} />
     </div>
   );
 }

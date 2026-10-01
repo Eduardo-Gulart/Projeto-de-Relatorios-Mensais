@@ -1,3 +1,4 @@
+import { insightRows } from "@/lib/analysis";
 /* eslint-disable @next/next/no-img-element -- HTML images are shared with PDF capture. */
 import { Report, values, fields, money, num } from "@/lib/report";
 import { defaultBranding } from "@/lib/branding";
@@ -20,7 +21,6 @@ import {
   Eyebrow,
   InsightRows,
   KpiCell,
-  NotAvailableRow,
   Rule,
 } from "./components";
 export function Change({
@@ -266,29 +266,9 @@ export function FunnelPage({ r, page }: { r: Report; page: number }) {
           <Change previous={p} current={c} points />
         </div>
         <InsightRows
-          rows={
-            c === null
-              ? [
-                  {
-                    label: "LEITURA",
-                    text: "Dados insuficientes para calcular a conversão total.",
-                  },
-                ]
-              : [
-                  {
-                    label: "DADO",
-                    text: `${num(f.completed)} conclusões em ${num(f.visits)} visitas.`,
-                  },
-                  {
-                    label: "LEITURA",
-                    text: "As taxas mostram a passagem entre etapas; não identificam a causa das perdas.",
-                  },
-                  {
-                    label: "AÇÃO",
-                    text: "Revise a etapa de maior perda e acompanhe o efeito dos ajustes no próximo mês.",
-                  },
-                ]
-          }
+          rows={insightRows(r, "funnel").filter(
+            (row) => row.label !== "IMPACTO",
+          )}
         />
       </div>
     </EditorialPage>

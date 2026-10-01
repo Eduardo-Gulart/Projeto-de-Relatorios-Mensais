@@ -49,12 +49,14 @@ export function KpiCell({
   prefix,
   suffix,
   detail,
+  tone,
 }: {
   label: string;
   value?: string | null;
   prefix?: string;
   suffix?: string;
   detail?: ReactNode;
+  tone?: "positive" | "negative" | "neutral";
 }) {
   return (
     <div className="rv2-kpi">
@@ -62,7 +64,7 @@ export function KpiCell({
       {value == null ? (
         <div className="rv2-unavailable">NÃO DISPONÍVEL</div>
       ) : (
-        <div className="rv2-value">
+        <div className={"rv2-value " + (tone ? "rv2-" + tone : "")}>
           <small>{prefix}</small>
           {value}
           <small>{suffix}</small>
