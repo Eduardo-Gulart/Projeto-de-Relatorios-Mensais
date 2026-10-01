@@ -278,3 +278,136 @@
   color: inherit;
   font-size: 14px;
 }
+.report-document .rv2-cover.rv2-page {
+  padding: 0;
+  background: var(--report-cover);
+}
+.report-document .rv2-page .rv2-cover-image {
+  display: block;
+  width: 794px;
+  height: 239px;
+  max-height: none;
+  object-fit: fill;
+}
+.report-document .rv2-page .rv2-cover-body {
+  padding: 55px 64px;
+}
+.report-document .rv2-page .rv2-cover-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--report-line);
+  gap: 30px 36px;
+  padding-top: 28px;
+  margin-top: 46px;
+  margin-bottom: 38px;
+}
+.report-document .rv2-page .rv2-cover-meta strong {
+  display: block;
+  font:
+    800 28px/1.15 "Relata Display",
+    sans-serif;
+  text-transform: uppercase;
+  margin: 10px 0;
+}
+.report-document .rv2-page .rv2-cover-meta p {
+  margin: 0;
+  font-size: 13px;
+}
+.report-document .rv2-page .rv2-funnel {
+  margin-top: 28px;
+}
+.report-document .rv2-page .rv2-funnel-row {
+  display: grid;
+  grid-template-columns: 150px 1fr 94px;
+  gap: 14px;
+  align-items: center;
+}
+.report-document .rv2-page .rv2-funnel-track {
+  height: 45px;
+  background: var(--report-track);
+  position: relative;
+}
+.report-document .rv2-page .rv2-funnel-bar {
+  height: 45px;
+  background: var(--report-light);
+}
+.report-document .rv2-page .rv2-funnel-track strong {
+  position: absolute;
+  left: 8px;
+  top: 5px;
+  font:
+    800 29px/1 "Relata Display",
+    sans-serif;
+  color: #111;
+  background: #f3f2ee;
+  padding: 2px 4px;
+}
+.report-document .rv2-page .rv2-funnel-old {
+  font:
+    400 10px/1.5 "Relata Mono",
+    monospace;
+  text-align: right;
+  color: var(--report-muted);
+}
+.report-document .rv2-page .rv2-transition {
+  margin: 7px 0 12px 164px;
+  font:
+    400 11px/1.4 "Relata Mono",
+    monospace;
+  min-height: 16px;
+}
+.report-document .rv2-page .rv2-target-mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 2px solid var(--report-amber);
+}
+.report-document .rv2-page .rv2-funnel-bottom {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 25px;
+  margin-top: 24px;
+  border-top: 1px solid var(--report-line);
+  padding-top: 20px;
+}
+.report-document .rv2-page .rv2-hero-number {
+  font:
+    800 72px/1.15 "Relata Display",
+    sans-serif;
+  color: var(--report-amber);
+}
+.report-document .rv2-page .rv2-funnel-bottom .rv2-insights {
+  margin: 0;
+  font-size: 12px;
+}
+.report-document .rv2-page .rv2-funnel-bottom .rv2-insights > div {
+  grid-template-columns: 65px 1fr;
+  padding: 8px 0;
+}
+.report-document .rv2-page .rv2-closing-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 35px;
+  border-top: 1px solid var(--report-line);
+  margin-top: 68px;
+  padding-top: 25px;
+  font:
+    400 11px/1.7 "Relata Mono",
+    monospace;
+  color: var(--report-muted);
+}
+.report-document .rv2-page.rv2-closing .rv2-title {
+  font-size: 92px;
+  margin-top: 150px;
+  max-width: 600px;
+  line-height: 1.02;
+}
+.report-document .rv2-page.rv2-closing p:not(.rv2-eyebrow) {
+  font-size: 17px;
+  line-height: 1.65;
+}
+.report-document .rv2-page .rv2-closing-bottom img {
+  width: 52px;
+  height: 52px;
+}
