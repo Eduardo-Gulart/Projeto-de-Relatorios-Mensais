@@ -560,3 +560,75 @@
     sans-serif;
   color: var(--report-amber);
 }
+.report-document .rv2-page .rv2-readings h3,
+.report-document .rv2-page .rv2-action h3,
+.report-document .rv2-page .rv2-callout h3 {
+  font:
+    800 25px/1.12 "Relata Display",
+    sans-serif;
+  text-transform: uppercase;
+  margin: 0 0 10px;
+}
+.report-document .rv2-page .rv2-reading {
+  padding-left: 12px;
+  border-left: 2px solid currentColor;
+  margin: 20px 0;
+}
+.report-document .rv2-page .rv2-reading p {
+  color: var(--report-dark);
+  margin: 5px 0;
+  font-size: 13px;
+}
+.report-document .rv2-page .rv2-actions {
+  margin-top: 12px;
+}
+.report-document .rv2-page .rv2-action {
+  display: grid;
+  grid-template-columns: 55px 1fr 145px;
+  gap: 20px;
+  border-bottom: 1px solid var(--report-line);
+  padding: 20px 0;
+}
+.report-document .rv2-page .rv2-action-number {
+  font:
+    800 40px/1 "Relata Display",
+    sans-serif;
+  color: var(--report-gold);
+}
+.report-document .rv2-page .rv2-action p {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 6px 0 0;
+}
+.report-document .rv2-page .rv2-action aside {
+  border-left: 1px solid var(--report-line);
+  padding-left: 16px;
+}
+.report-document .rv2-page .rv2-action aside strong {
+  display: block;
+  margin: 8px 0;
+  font-size: 15px;
+}
+.report-document .rv2-page .rv2-continuation {
+  font-size: 24px;
+  display: block;
+  margin-top: 12px;
+}
+.report-document .rv2-page .rv2-evidence {
+  margin: 24px 0;
+}
+.report-document .rv2-page .rv2-evidence img {
+  width: 100%;
+  height: 270px;
+  max-height: 270px;
+  object-fit: contain;
+  background: white;
+}
+.report-document .rv2-page .rv2-evidence figcaption {
+  font:
+    400 11px/1.5 "Relata Mono",
+    monospace;
+  color: var(--report-muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}

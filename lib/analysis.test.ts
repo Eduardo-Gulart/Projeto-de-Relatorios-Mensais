@@ -58,3 +58,28 @@ describe("análises editoriais", () => {
     expect(next.actions).toBeUndefined();
   });
 });
+import { opportunityEstimate, actionPages } from "./analysis";
+import { editorialFixture } from "./editorial-fixtures";
+it("estima oportunidade sem inventar dados nem dividir por zero", () => {
+  const { r } = editorialFixture();
+  const op = opportunityEstimate(r);
+  expect(op?.extra).toBe(100);
+  expect(op?.lift).toBe(5);
+  expect(opportunityEstimate(blank())).toBeNull();
+  r.evidence.find(
+    (e) => e.category === "funnel" && e.period === r.current,
+  )!.values.bag = 0;
+  expect(opportunityEstimate(r)).toBeNull();
+});
+it("divide planos longos e preserva o conteúdo", () => {
+  const item = { title: "Revisão", description: "palavra ".repeat(300).trim() };
+  const pages = actionPages([item]);
+  expect(pages.length).toBeGreaterThan(1);
+  expect(pages.every((p) => p.length <= 5)).toBe(true);
+  expect(
+    pages
+      .flat()
+      .map((a) => a.description)
+      .join(" "),
+  ).toBe(item.description);
+});

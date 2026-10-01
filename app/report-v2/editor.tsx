@@ -94,6 +94,73 @@ export default function EditorialEditor({
           </fieldset>
         ))}
       </details>
+      <details>
+        <summary>Plano dos próximos 30 dias</summary>
+        <p className="muted">
+          Sem itens manuais, o PDF usa as sugestões dos alertas.
+        </p>
+        {(r.nextSteps || r.actions || []).map((item, index) => (
+          <fieldset key={index}>
+            <legend>Ação {index + 1}</legend>
+            {(["title", "description", "indicator", "target"] as const).map(
+              (key) => (
+                <label key={key}>
+                  {
+                    {
+                      title: "Título",
+                      description: "Descrição",
+                      indicator: "Indicador",
+                      target: "Meta",
+                    }[key]
+                  }
+                  <textarea
+                    maxLength={key === "description" ? 1200 : 120}
+                    rows={key === "description" ? 3 : 1}
+                    value={item[key] || ""}
+                    onChange={(e) =>
+                      onChange({
+                        nextSteps: (r.nextSteps || r.actions || []).map(
+                          (a, i) =>
+                            i === index ? { ...a, [key]: e.target.value } : a,
+                        ),
+                      })
+                    }
+                  />
+                </label>
+              ),
+            )}
+            <button
+              type="button"
+              className="secondary"
+              onClick={() =>
+                onChange({
+                  nextSteps: (r.nextSteps || r.actions || []).filter(
+                    (_, i) => i !== index,
+                  ),
+                  actions: undefined,
+                })
+              }
+            >
+              Remover ação
+            </button>
+          </fieldset>
+        ))}
+        <button
+          type="button"
+          className="secondary"
+          disabled={(r.nextSteps || r.actions || []).length >= 30}
+          onClick={() =>
+            onChange({
+              nextSteps: [
+                ...(r.nextSteps || r.actions || []),
+                { title: "", description: "" },
+              ],
+            })
+          }
+        >
+          Adicionar ação
+        </button>
+      </details>
     </section>
   );
 }

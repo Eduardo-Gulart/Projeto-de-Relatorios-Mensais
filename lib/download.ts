@@ -5,12 +5,18 @@ function overflow(page: HTMLElement) {
   if (page.dataset.reportLayout === "editorial") {
     const content = page.querySelector<HTMLElement>(".rv2-content");
     const footer = page.querySelector<HTMLElement>(".rv2-footer");
+    const boundary = footer
+      ? footer.getBoundingClientRect().top - 24
+      : page.getBoundingClientRect().top + PAPER_HEIGHT - 40;
     return (
       !!content &&
-      !!footer &&
-      (content.getBoundingClientRect().bottom >
-        footer.getBoundingClientRect().top - 24 ||
-        content.scrollWidth > content.clientWidth + 1)
+      (content.getBoundingClientRect().bottom > boundary ||
+        content.scrollWidth > content.clientWidth + 1 ||
+        Array.from(content.querySelectorAll<HTMLElement>("*")).some(
+          (el) =>
+            el.scrollWidth > el.clientWidth + 2 &&
+            getComputedStyle(el).display !== "inline",
+        ))
     );
   }
   const content = page.querySelector<HTMLElement>(".report-page-content");

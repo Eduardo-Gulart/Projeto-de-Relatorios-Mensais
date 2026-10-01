@@ -180,3 +180,73 @@ export function suggestedActions(r: Report): EditorialAction[] {
           : undefined,
   }));
 }
+
+export function opportunityEstimate(r: Report) {
+  const f = values(r, "funnel", r.current);
+  if (
+    !["visits", "views", "bag", "review", "completed"].every(
+      (k) => finite(f[k]) && f[k]! > 0,
+    )
+  )
+    return null;
+  const transitions = funnelTransitions(f, {});
+  if (transitions.some((t) => t.rate === null)) return null;
+  const weakest = transitions.reduce((a, b) => (a.rate! <= b.rate! ? a : b));
+  const lift = Math.min(5, 100 - weakest.rate!);
+  if (lift <= 0) return null;
+  const origin = f[weakest.from]!,
+    destination = f[weakest.to]!,
+    completed = f.completed!;
+  return {
+    from: weakest.from,
+    to: weakest.to,
+    rate: weakest.rate!,
+    lift,
+    extra: Math.round(origin * (lift / 100) * (completed / destination)),
+    formula: `${num(origin)} × ${decimal(lift / 100, 2)} × (${num(completed)} ÷ ${num(destination)})`,
+  };
+}
+
+export function actionPages(items: EditorialAction[]) {
+  const fragments: EditorialAction[] = [];
+  for (const item of items) {
+    const words = item.description.split(/\s+/);
+    let part = "";
+    let continuation = false;
+    for (const word of words) {
+      if (part.length + word.length > 370 && part) {
+        fragments.push({
+          ...item,
+          title: item.title + (continuation ? " (continuação)" : ""),
+          description: part,
+        });
+        continuation = true;
+        part = "";
+      }
+      part += (part ? " " : "") + word;
+    }
+    fragments.push({
+      ...item,
+      title: item.title + (continuation ? " (continuação)" : ""),
+      description: part,
+    });
+  }
+  const pages: EditorialAction[][] = [];
+  let page: EditorialAction[] = [],
+    cost = 0;
+  for (const item of fragments) {
+    const size =
+      100 +
+      Math.ceil(item.description.length / 55) * 17 +
+      Math.ceil(item.title.length / 35) * 22;
+    if (page.length && (page.length === 5 || cost + size > 650)) {
+      pages.push(page);
+      page = [];
+      cost = 0;
+    }
+    page.push(item);
+    cost += size;
+  }
+  if (page.length) pages.push(page);
+  return pages;
+}

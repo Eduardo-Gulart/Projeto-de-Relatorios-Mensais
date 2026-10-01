@@ -1113,6 +1113,26 @@ export default function Home() {
           </TabsContent>
           <TabsContent value="preview">
             <div className="preview-toolbar">
+              <label>
+                Modelo do PDF
+                <Choice
+                  value={r.layout || "editorial"}
+                  onChange={(v) =>
+                    change({ layout: v as "classic" | "editorial" })
+                  }
+                  items={[
+                    ["editorial", "Editorial"],
+                    ["classic", "Clássico"],
+                  ]}
+                />
+              </label>
+              <label className="confirm">
+                <Checkbox
+                  checked={!!r.includeEvidence}
+                  onCheckedChange={(v) => change({ includeEvidence: !!v })}
+                />
+                Incluir prints no anexo editorial
+              </label>
               <p>
                 {r.status === "reviewed"
                   ? "Relatório conferido. Seu PDF está pronto para baixar."
@@ -1141,7 +1161,7 @@ export default function Home() {
                 <Printer size={18} /> {busy || "Gerar PDF"}
               </button>
             </div>
-            <ReportPreview r={r} />
+            <ReportPreview r={r} reports={history} />
           </TabsContent>
           <TabsContent value="history">
             <section className="panel">
@@ -1252,7 +1272,7 @@ export default function Home() {
       </div>
       {qualityPrompt.dialog}
       <div className="print-only">
-        <ReportPreview r={r} />
+        <ReportPreview r={r} reports={history} />
       </div>
     </main>
   );

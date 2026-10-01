@@ -1,20 +1,428 @@
 "use client";
-import {ReactNode} from 'react';
-import {Report,Category,values,money,num,month,variation,fields,labels} from '@/lib/report';
-const title=(p:string)=>month(p).replace(/^./,c=>c.toUpperCase());
-export default function ReportPreview({r}:{r:Report}){
- const a=values(r,'finance',r.previous),b=values(r,'finance',r.current),s=values(r,'sales',r.previous),t=values(r,'sales',r.current),f=values(r,'funnel',r.current),q=r.evidence.find(e=>e.category==='quality')?.values||{};
- const delta=(x:number|null|undefined,y:number|null|undefined)=>{const v=variation(x,y);return v==null?'Não aplicável':(v>0?'+':'')+num(v)+'%'};
- const pic=(category:Category,period:string)=>{const e=r.evidence.find(e=>e.category===category&&e.period===period);return e?<figure className={'report-evidence '+category}><figcaption>{labels[category]} | {period==='quality'?r.qualityPeriod||'Período não informado':title(period)}</figcaption><img src={e.url} alt={`${labels[category]} - ${period==='quality'?r.qualityPeriod:month(period)}`}/></figure>:<p className="report-missing">Fonte não informada: {labels[category]} - {period==='quality'?'qualidade':month(period)}.</p>};
- const heading=(n:string,text:string,description:string)=><div className="section-heading"><span>{n}</span><div><h2>{text}</h2><p>{description}</p></div></div>;
- const header=<div className="report-running-head"><b>RELATÓRIO DE DESEMPENHO</b><span>{title(r.current)}</span></div>;
- const page=(n:number,cls:string,children:ReactNode)=><div className={'report-page '+cls}><div className="report-page-content">{header}{children}</div><footer className="report-footer"><span>{r.store||'Loja não informada'} · {r.manager||'Gestor não informado'}</span><span className="page-number">{String(n).padStart(2,'0')} / 05</span></footer></div>;
- const comparison=(rows:[string,number|null|undefined,number|null|undefined,boolean][])=> <table className="report-table"><thead><tr><th>Indicador</th><th>{title(r.previous)}</th><th>{title(r.current)}</th><th>Variação</th></tr></thead><tbody>{rows.map(([name,x,y,currency])=><tr key={name}><td>{name}</td><td>{currency?money(x):num(x)}</td><td>{currency?money(y):num(y)}</td><td>{delta(x,y)}</td></tr>)}</tbody></table>;
- return <div className="report-preview-scroll"><div className="report-document">
- {page(1,'page-financial',<><div className="report-banner"><img className="reference-header" src="/report/header.png" alt="Identidade visual Will e iFood"/><div><p>ACOMPANHAMENTO MENSAL</p><h1>Relatório de desempenho<br/>comercial</h1></div></div><div className="report-meta"><h2>{r.store||'Nome da loja'}</h2><dl><div><dt>Cliente</dt><dd>{r.client||'Não informado'}</dd></div><div><dt>Responsável pela gestão</dt><dd>{r.manager||'Não informado'}</dd></div><div><dt>Período comparativo</dt><dd>{title(r.previous)} a {title(r.current)}</dd></div><div><dt>Início da gestão</dt><dd>{r.started?new Date(r.started+'T12:00:00').toLocaleDateString('pt-BR'):'Não informado'}</dd></div></dl></div>{heading('01','Demonstrativo financeiro','Comparação dos valores registrados no painel Financeiro.')}{comparison(fields.finance.map(([key,label])=>[label,a[key],b[key],true]))}<p className="report-source-note">Taxas, comissões, serviços e promoções são apresentados com os sinais registrados na fonte. Variação relativa ao mês anterior; base zero ou ausente: não aplicável.</p><div className="financial-evidence">{pic('finance',r.previous)}{pic('finance',r.current)}</div></>)}
- {page(2,'page-sales',<>{heading('02','Desempenho de vendas','Evolução dos pedidos, do valor das vendas e da aquisição de clientes.')}{comparison(fields.sales.map(([key,label])=>[label,s[key],t[key],['salesValue','ticket'].includes(key)]))}<p className="report-source-note">Fonte: painel Vendas do iFood. O valor das vendas deste painel é mantido separado das vendas brutas do Financeiro, pois as bases podem ser diferentes.</p><h3 className="report-subheading">Registros do período</h3>{pic('sales',r.previous)}{pic('sales',r.current)}</>)}
- {page(3,'page-funnel',<>{heading('03','Conversão do cardápio','Participação de cada etapa no total de visitas do mês atual.')}<table className="report-table funnel-table"><thead><tr>{['Etapa','Quantidade','Conversão','Meta','Diferença'].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{fields.funnel.map(([key,label])=>{const p=f[key]==null||!f.visits?null:f[key]!/f.visits*100,target=r.targets[key],diff=p==null||target==null?null:p-target;return <tr key={key}><td>{label}</td><td>{num(f[key])}</td><td>{p==null?'—':num(p)+'%'}</td><td>{target==null?'—':num(target)+'%'}</td><td>{key==='visits'?'Referência':diff==null?'—':(diff>0?'+':'')+num(diff)+' p.p.'}</td></tr>})}</tbody></table><p className="report-source-note">As diferenças são expressas em pontos percentuais (p.p.). Valores positivos indicam resultado acima da meta cadastrada; valores negativos, abaixo.</p><h3 className="report-subheading">Registros do período</h3>{pic('funnel',r.previous)}{pic('funnel',r.current)}</>)}
- {page(4,'page-quality',<>{heading('04','Qualidade operacional','Indicadores de atendimento e cumprimento das metas cadastradas.')}<div className="report-callout"><b>Período informado na fonte</b><p>{r.qualityPeriod||'Não informado'}</p></div><table className="report-table quality-table"><thead><tr><th>Indicador</th><th>Resultado</th><th>Meta</th><th>Situação</th></tr></thead><tbody>{fields.quality.map(([key,label])=>{const value=q[key],target=r.targets[key],missing=value==null||target==null,pass=!missing&&(key==='rating'?value>=target:value<=target);return <tr key={key}><td>{label.replace(' (%)','')}</td><td>{value==null?'—':num(value)+(key==='rating'?' / 5':'%')}</td><td>{target==null?'—':(key==='rating'?'≥ ':'≤ ')+num(target)+(key==='rating'?' / 5':'%')}</td><td className={missing?'':pass?'result-positive':'result-attention'}>{missing?'Não avaliado':pass?'Meta atendida':'Requer atenção'}</td></tr>})}</tbody></table><p className="report-source-note">A análise considera o período exibido no print de qualidade, que pode abranger mais de um mês. As metas são as definidas para este relatório.</p><h3 className="report-subheading">Registro da qualidade operacional</h3>{pic('quality','quality')}<div className="report-callout quality-reading"><b>Critério de leitura</b><p>Avaliações: resultados iguais ou superiores à meta. Cancelamentos e pedidos com chamados: resultados iguais ou inferiores à meta.</p></div></>)}
- {page(5,'page-strategies',<>{heading('05','Avaliação e estratégias','Registro da avaliação do gestor e das ações realizadas no período.')}<div className="report-callout"><b>Classificação geral</b><p>{r.classification||'Não informada'}</p></div><div className="report-strategies"><h3 className="report-subheading">Estratégias utilizadas</h3>{r.strategies.trim()?<ul>{r.strategies.split(/\n+/).filter(x=>x.trim()).map((line,i)=>{const clean=line.replace(/^\s*[•*-]\s*/,''),split=clean.indexOf(':');return <li key={i}>{split>0&&split<70?<><b>{clean.slice(0,split+1)}</b>{clean.slice(split+1)}</>:clean}</li>})}</ul>:<p>Não foram registradas estratégias para este período.</p>}</div><p className="report-method-note">Este documento consolida os indicadores dos prints fornecidos e as informações registradas pelo gestor. A classificação geral corresponde à avaliação informada para a loja.</p>{r.status!=='reviewed'&&<p className="report-draft">RASCUNHO - DADOS PENDENTES DE CONFERÊNCIA</p>}</>)}
- </div></div>
+import EditorialDocument from "./report-v2/document";
+import { ReactNode } from "react";
+import {
+  Report,
+  Category,
+  values,
+  money,
+  num,
+  month,
+  variation,
+  fields,
+  labels,
+} from "@/lib/report";
+const title = (p: string) => month(p).replace(/^./, (c) => c.toUpperCase());
+function ClassicReportPreview({ r }: { r: Report }) {
+  const a = values(r, "finance", r.previous),
+    b = values(r, "finance", r.current),
+    s = values(r, "sales", r.previous),
+    t = values(r, "sales", r.current),
+    f = values(r, "funnel", r.current),
+    q = r.evidence.find((e) => e.category === "quality")?.values || {};
+  const delta = (
+    x: number | null | undefined,
+    y: number | null | undefined,
+  ) => {
+    const v = variation(x, y);
+    return v == null ? "Não aplicável" : (v > 0 ? "+" : "") + num(v) + "%";
+  };
+  const pic = (category: Category, period: string) => {
+    const e = r.evidence.find(
+      (e) => e.category === category && e.period === period,
+    );
+    return e ? (
+      <figure className={"report-evidence " + category}>
+        <figcaption>
+          {labels[category]} |{" "}
+          {period === "quality"
+            ? r.qualityPeriod || "Período não informado"
+            : title(period)}
+        </figcaption>
+        <img
+          src={e.url}
+          alt={`${labels[category]} - ${period === "quality" ? r.qualityPeriod : month(period)}`}
+        />
+      </figure>
+    ) : (
+      <p className="report-missing">
+        Fonte não informada: {labels[category]} -{" "}
+        {period === "quality" ? "qualidade" : month(period)}.
+      </p>
+    );
+  };
+  const heading = (n: string, text: string, description: string) => (
+    <div className="section-heading">
+      <span>{n}</span>
+      <div>
+        <h2>{text}</h2>
+        <p>{description}</p>
+      </div>
+    </div>
+  );
+  const header = (
+    <div className="report-running-head">
+      <b>RELATÓRIO DE DESEMPENHO</b>
+      <span>{title(r.current)}</span>
+    </div>
+  );
+  const page = (n: number, cls: string, children: ReactNode) => (
+    <div className={"report-page " + cls}>
+      <div className="report-page-content">
+        {header}
+        {children}
+      </div>
+      <footer className="report-footer">
+        <span>
+          {r.store || "Loja não informada"} ·{" "}
+          {r.manager || "Gestor não informado"}
+        </span>
+        <span className="page-number">{String(n).padStart(2, "0")} / 05</span>
+      </footer>
+    </div>
+  );
+  const comparison = (
+    rows: [
+      string,
+      number | null | undefined,
+      number | null | undefined,
+      boolean,
+    ][],
+  ) => (
+    <table className="report-table">
+      <thead>
+        <tr>
+          <th>Indicador</th>
+          <th>{title(r.previous)}</th>
+          <th>{title(r.current)}</th>
+          <th>Variação</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map(([name, x, y, currency]) => (
+          <tr key={name}>
+            <td>{name}</td>
+            <td>{currency ? money(x) : num(x)}</td>
+            <td>{currency ? money(y) : num(y)}</td>
+            <td>{delta(x, y)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+  return (
+    <div className="report-preview-scroll">
+      <div className="report-document">
+        {page(
+          1,
+          "page-financial",
+          <>
+            <div className="report-banner">
+              <img
+                className="reference-header"
+                src="/report/header.png"
+                alt="Identidade visual Will e iFood"
+              />
+              <div>
+                <p>ACOMPANHAMENTO MENSAL</p>
+                <h1>
+                  Relatório de desempenho
+                  <br />
+                  comercial
+                </h1>
+              </div>
+            </div>
+            <div className="report-meta">
+              <h2>{r.store || "Nome da loja"}</h2>
+              <dl>
+                <div>
+                  <dt>Cliente</dt>
+                  <dd>{r.client || "Não informado"}</dd>
+                </div>
+                <div>
+                  <dt>Responsável pela gestão</dt>
+                  <dd>{r.manager || "Não informado"}</dd>
+                </div>
+                <div>
+                  <dt>Período comparativo</dt>
+                  <dd>
+                    {title(r.previous)} a {title(r.current)}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Início da gestão</dt>
+                  <dd>
+                    {r.started
+                      ? new Date(r.started + "T12:00:00").toLocaleDateString(
+                          "pt-BR",
+                        )
+                      : "Não informado"}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+            {heading(
+              "01",
+              "Demonstrativo financeiro",
+              "Comparação dos valores registrados no painel Financeiro.",
+            )}
+            {comparison(
+              fields.finance.map(([key, label]) => [
+                label,
+                a[key],
+                b[key],
+                true,
+              ]),
+            )}
+            <p className="report-source-note">
+              Taxas, comissões, serviços e promoções são apresentados com os
+              sinais registrados na fonte. Variação relativa ao mês anterior;
+              base zero ou ausente: não aplicável.
+            </p>
+            <div className="financial-evidence">
+              {pic("finance", r.previous)}
+              {pic("finance", r.current)}
+            </div>
+          </>,
+        )}
+        {page(
+          2,
+          "page-sales",
+          <>
+            {heading(
+              "02",
+              "Desempenho de vendas",
+              "Evolução dos pedidos, do valor das vendas e da aquisição de clientes.",
+            )}
+            {comparison(
+              fields.sales.map(([key, label]) => [
+                label,
+                s[key],
+                t[key],
+                ["salesValue", "ticket"].includes(key),
+              ]),
+            )}
+            <p className="report-source-note">
+              Fonte: painel Vendas do iFood. O valor das vendas deste painel é
+              mantido separado das vendas brutas do Financeiro, pois as bases
+              podem ser diferentes.
+            </p>
+            <h3 className="report-subheading">Registros do período</h3>
+            {pic("sales", r.previous)}
+            {pic("sales", r.current)}
+          </>,
+        )}
+        {page(
+          3,
+          "page-funnel",
+          <>
+            {heading(
+              "03",
+              "Conversão do cardápio",
+              "Participação de cada etapa no total de visitas do mês atual.",
+            )}
+            <table className="report-table funnel-table">
+              <thead>
+                <tr>
+                  {[
+                    "Etapa",
+                    "Quantidade",
+                    "Conversão",
+                    "Meta",
+                    "Diferença",
+                  ].map((h) => (
+                    <th key={h}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {fields.funnel.map(([key, label]) => {
+                  const p =
+                      f[key] == null || !f.visits
+                        ? null
+                        : (f[key]! / f.visits) * 100,
+                    target = r.targets[key],
+                    diff = p == null || target == null ? null : p - target;
+                  return (
+                    <tr key={key}>
+                      <td>{label}</td>
+                      <td>{num(f[key])}</td>
+                      <td>{p == null ? "—" : num(p) + "%"}</td>
+                      <td>{target == null ? "—" : num(target) + "%"}</td>
+                      <td>
+                        {key === "visits"
+                          ? "Referência"
+                          : diff == null
+                            ? "—"
+                            : (diff > 0 ? "+" : "") + num(diff) + " p.p."}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            <p className="report-source-note">
+              As diferenças são expressas em pontos percentuais (p.p.). Valores
+              positivos indicam resultado acima da meta cadastrada; valores
+              negativos, abaixo.
+            </p>
+            <h3 className="report-subheading">Registros do período</h3>
+            {pic("funnel", r.previous)}
+            {pic("funnel", r.current)}
+          </>,
+        )}
+        {page(
+          4,
+          "page-quality",
+          <>
+            {heading(
+              "04",
+              "Qualidade operacional",
+              "Indicadores de atendimento e cumprimento das metas cadastradas.",
+            )}
+            <div className="report-callout">
+              <b>Período informado na fonte</b>
+              <p>{r.qualityPeriod || "Não informado"}</p>
+            </div>
+            <table className="report-table quality-table">
+              <thead>
+                <tr>
+                  <th>Indicador</th>
+                  <th>Resultado</th>
+                  <th>Meta</th>
+                  <th>Situação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {fields.quality.map(([key, label]) => {
+                  const value = q[key],
+                    target = r.targets[key],
+                    missing = value == null || target == null,
+                    pass =
+                      !missing &&
+                      (key === "rating" ? value >= target : value <= target);
+                  return (
+                    <tr key={key}>
+                      <td>{label.replace(" (%)", "")}</td>
+                      <td>
+                        {value == null
+                          ? "—"
+                          : num(value) + (key === "rating" ? " / 5" : "%")}
+                      </td>
+                      <td>
+                        {target == null
+                          ? "—"
+                          : (key === "rating" ? "≥ " : "≤ ") +
+                            num(target) +
+                            (key === "rating" ? " / 5" : "%")}
+                      </td>
+                      <td
+                        className={
+                          missing
+                            ? ""
+                            : pass
+                              ? "result-positive"
+                              : "result-attention"
+                        }
+                      >
+                        {missing
+                          ? "Não avaliado"
+                          : pass
+                            ? "Meta atendida"
+                            : "Requer atenção"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            <p className="report-source-note">
+              A análise considera o período exibido no print de qualidade, que
+              pode abranger mais de um mês. As metas são as definidas para este
+              relatório.
+            </p>
+            <h3 className="report-subheading">
+              Registro da qualidade operacional
+            </h3>
+            {pic("quality", "quality")}
+            <div className="report-callout quality-reading">
+              <b>Critério de leitura</b>
+              <p>
+                Avaliações: resultados iguais ou superiores à meta.
+                Cancelamentos e pedidos com chamados: resultados iguais ou
+                inferiores à meta.
+              </p>
+            </div>
+          </>,
+        )}
+        {page(
+          5,
+          "page-strategies",
+          <>
+            {heading(
+              "05",
+              "Avaliação e estratégias",
+              "Registro da avaliação do gestor e das ações realizadas no período.",
+            )}
+            <div className="report-callout">
+              <b>Classificação geral</b>
+              <p>{r.classification || "Não informada"}</p>
+            </div>
+            <div className="report-strategies">
+              <h3 className="report-subheading">Estratégias utilizadas</h3>
+              {r.strategies.trim() ? (
+                <ul>
+                  {r.strategies
+                    .split(/\n+/)
+                    .filter((x) => x.trim())
+                    .map((line, i) => {
+                      const clean = line.replace(/^\s*[•*-]\s*/, ""),
+                        split = clean.indexOf(":");
+                      return (
+                        <li key={i}>
+                          {split > 0 && split < 70 ? (
+                            <>
+                              <b>{clean.slice(0, split + 1)}</b>
+                              {clean.slice(split + 1)}
+                            </>
+                          ) : (
+                            clean
+                          )}
+                        </li>
+                      );
+                    })}
+                </ul>
+              ) : (
+                <p>Não foram registradas estratégias para este período.</p>
+              )}
+            </div>
+            <p className="report-method-note">
+              Este documento consolida os indicadores dos prints fornecidos e as
+              informações registradas pelo gestor. A classificação geral
+              corresponde à avaliação informada para a loja.
+            </p>
+            {r.status !== "reviewed" && (
+              <p className="report-draft">
+                RASCUNHO - DADOS PENDENTES DE CONFERÊNCIA
+              </p>
+            )}
+          </>,
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function ReportPreview({
+  r,
+  reports = [],
+}: {
+  r: Report;
+  reports?: Report[];
+}) {
+  return r.layout === "classic" ? (
+    <ClassicReportPreview r={r} />
+  ) : (
+    <EditorialDocument r={r} reports={reports} />
+  );
 }
