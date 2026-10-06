@@ -134,12 +134,15 @@ function preparePages(root: HTMLElement) {
       );
   }
 }
-export async function downloadReport(filename: string) {
+export async function downloadReport(
+  filename: string,
+  selector = ".app-ui .report-document",
+) {
   const [{ jsPDF }, { default: html2canvas }] = await Promise.all([
     import("jspdf"),
     import("html2canvas"),
   ]);
-  const source = document.querySelector(".app-ui .report-document");
+  const source = document.querySelector(selector);
   if (!source) throw new Error("Abra a prévia antes de baixar o PDF.");
   const root = source.cloneNode(true) as HTMLElement;
   root.className = "report-document export-root";

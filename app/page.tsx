@@ -55,6 +55,7 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
 import BackupPanel from "./backup-panel";
+import DiagnosticPanel from "./diagnostics/panel";
 import { useSession } from "@/lib/use-session";
 import { usePersistence } from "@/lib/use-persistence";
 function Choice({
@@ -519,12 +520,25 @@ export default function Home() {
         <AppNav active="reports" />
         <div className="heading">
           <div>
-            <p className="eyebrow">RELATÓRIOS MENSAIS</p>
-            <h1>Relatórios mensais</h1>
-            <p>Confira os resultados e gere o PDF de cada loja.</p>
+            <p className="eyebrow">
+              {tab === "diagnostics"
+                ? "ENTRADA NA GESTÃO"
+                : "RELATÓRIOS MENSAIS"}
+            </p>
+            <h1>
+              {tab === "diagnostics"
+                ? "Diagnósticos de lojas"
+                : "Relatórios mensais"}
+            </h1>
+            <p>
+              {tab === "diagnostics"
+                ? "Organize a análise inicial e as prioridades da nova operação."
+                : "Confira os resultados e gere o PDF de cada loja."}
+            </p>
           </div>
           <button
             className="secondary"
+            hidden={tab === "diagnostics"}
             disabled={!!busy}
             onClick={() => load(blank())}
           >
@@ -632,7 +646,9 @@ export default function Home() {
             )}
           </div>
         )}
-        <MonthCloseBanner report={r} reports={history} />
+        {tab !== "diagnostics" && (
+          <MonthCloseBanner report={r} reports={history} />
+        )}
         <Tabs value={tab} onValueChange={setTab}>
           <div className="toolbar">
             <TabsList>
@@ -641,9 +657,10 @@ export default function Home() {
               <TabsTrigger value="history">
                 Lojas e histórico ({history.length})
               </TabsTrigger>
+              <TabsTrigger value="diagnostics">Diagnósticos</TabsTrigger>
               <TabsTrigger value="backup">Backup</TabsTrigger>
             </TabsList>
-            <span className="save-status">
+            <span className="save-status" hidden={tab === "diagnostics"}>
               {dirty
                 ? persistence.conflict
                   ? "Conflito entre versões — escolha uma opção acima"
@@ -1224,6 +1241,13 @@ export default function Home() {
                 Abrir modelo vazio
               </button>
             </section>
+          </TabsContent>
+          <TabsContent
+            value="diagnostics"
+            forceMount
+            className={tab === "diagnostics" ? "" : "hidden"}
+          >
+            <DiagnosticPanel />
           </TabsContent>
           <TabsContent value="backup">
             <BackupPanel
