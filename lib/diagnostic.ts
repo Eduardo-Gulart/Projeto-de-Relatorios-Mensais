@@ -5,9 +5,10 @@ export const diagnosticSections = [
     title: "Perfil da loja",
     hint: "Primeira impressão, identidade e condições de compra",
     checks: [
-      "Capa e identidade visual precisam de revisão",
-      "Pedido mínimo precisa ser reavaliado",
-      "Informações da loja incompletas",
+      "Capa da loja pouco atrativa",
+      "Descrição da loja incompleta",
+      "Pedido mínimo elevado",
+      "Horários de funcionamento incorretos",
     ],
     action:
       "Revisar capa, descrição e condições de compra para tornar a proposta da loja clara.",
@@ -17,9 +18,12 @@ export const diagnosticSections = [
     title: "Cardápio",
     hint: "Categorias, fotos, descrições, preços e complementos",
     checks: [
-      "Fotos ou descrições incompletas",
-      "Produtos sem preço base claro",
-      "Faltam complementos e combinações",
+      "Produtos sem foto",
+      "Descrições dos produtos incompletas",
+      "Produtos sem preço ou com preço zerado",
+      "Preço somente nos complementos obrigatórios",
+      "Faltam adicionais para aumentar o ticket médio",
+      "Categorias do cardápio desorganizadas",
     ],
     action:
       "Priorizar os produtos mais acessados, revisar preços e descrições e testar complementos coerentes.",
@@ -29,9 +33,10 @@ export const diagnosticSections = [
     title: "Conversão do cardápio",
     hint: "Visitas, visualizações, sacola e pedidos concluídos",
     checks: [
-      "Abandono relevante entre etapas",
-      "Tráfego não se transforma em pedidos",
-      "Oferta precisa ser revisada",
+      "Muitas visitas e poucos pedidos concluídos",
+      "Abandono ao adicionar produtos à sacola",
+      "Abandono na revisão do pedido",
+      "Investimento em anúncios sem conversão suficiente",
     ],
     action:
       "Identificar a etapa de maior abandono e testar ajustes de oferta, fotos e condições de entrega.",
@@ -41,9 +46,10 @@ export const diagnosticSections = [
     title: "Qualidade e Super Restaurantes",
     hint: "Avaliações, chamados e experiência do cliente",
     checks: [
-      "Avaliações exigem atenção",
-      "Chamados recorrentes",
-      "Reclamações sobre qualidade ou atraso",
+      "Nota de avaliação abaixo da meta",
+      "Muitos pedidos com chamados",
+      "Reclamações sobre a qualidade dos produtos",
+      "Reclamações sobre atrasos",
     ],
     action:
       "Agrupar os motivos de reclamação e definir uma rotina de conferência na produção e expedição.",
@@ -53,9 +59,10 @@ export const diagnosticSections = [
     title: "Vendas",
     hint: "Volume de pedidos, valor vendido e ticket médio",
     checks: [
-      "Queda no volume de pedidos",
-      "Ticket médio exige revisão",
-      "Oscilação nas vendas",
+      "Queda na quantidade de pedidos",
+      "Queda no valor das vendas",
+      "Ticket médio baixo",
+      "Poucos novos clientes",
     ],
     action:
       "Comparar períodos equivalentes e identificar produtos, horários e canais que explicam a variação.",
@@ -65,9 +72,10 @@ export const diagnosticSections = [
     title: "Cancelamentos",
     hint: "Frequência, motivos e responsabilidade",
     checks: [
-      "Cancelamentos frequentes",
-      "Indisponibilidade de produtos",
-      "Atrasos ou falhas de expedição",
+      "Taxa de cancelamento elevada",
+      "Cancelamentos por atraso",
+      "Cancelamentos por falta de produto",
+      "Cancelamentos por erro no pedido",
     ],
     action:
       "Revisar motivos de cancelamento, disponibilidade do cardápio e capacidade operacional nos horários de pico.",
@@ -77,9 +85,10 @@ export const diagnosticSections = [
     title: "Financeiro",
     hint: "Vendas brutas, descontos, taxas e repasse líquido",
     checks: [
-      "Descontos comprometem o repasse",
-      "Taxas precisam de conciliação",
-      "Margem dos produtos não validada",
+      "Repasse líquido baixo em relação às vendas",
+      "Descontos de promoções elevados",
+      "Taxas e comissões precisam de conferência",
+      "Custos e margem dos produtos não calculados",
     ],
     action:
       "Conciliar vendas e descontos e calcular a margem dos produtos com custos operacionais antes de ampliar incentivos.",
@@ -89,9 +98,12 @@ export const diagnosticSections = [
     title: "Promoções e anúncios",
     hint: "Investimento, retorno e sobreposição de incentivos",
     checks: [
-      "Campanhas sem retorno avaliado",
-      "Descontos sobrepostos",
-      "Orçamento precisa ser reavaliado",
+      "Custo dos anúncios alto para o retorno observado",
+      "Desconto em itens comprometendo a margem",
+      "Campanha inteligente com investimento inadequado",
+      "Investimento em Hits precisa de revisão",
+      "Cupons insuficientes ou mal configurados",
+      "Promoções com descontos sobrepostos",
     ],
     action:
       "Avaliar o custo e a contribuição de cada campanha; testar mudanças graduais e acompanhar o resultado.",
@@ -101,9 +113,10 @@ export const diagnosticSections = [
     title: "Serviços iFood",
     hint: "Agendamento, disponibilidade e modalidades habilitadas",
     checks: [
-      "Configurações não acompanham a operação",
-      "Pedidos agendados precisam de revisão",
-      "Modalidades de entrega precisam ser avaliadas",
+      "Pedidos agendados incompatíveis com a operação",
+      "Anúncios gerando demanda fora do horário de atendimento",
+      "Entrega Flex indisponível ou não habilitada",
+      "Serviços ativos sem acompanhamento",
     ],
     action:
       "Revisar os serviços disponíveis e alinhar horários e modalidades à capacidade real da loja.",
@@ -113,9 +126,11 @@ export const diagnosticSections = [
     title: "Entrega e tempo de atendimento",
     hint: "Raio, prazo informado, logística e capacidade",
     checks: [
-      "Raio de entrega elevado",
-      "Prazo de entrega pouco competitivo",
-      "Capacidade logística insuficiente",
+      "Raio de entrega muito alto",
+      "Tempo de entrega elevado nos primeiros quilômetros",
+      "Entregadores demoram a retornar à loja",
+      "Taxa de entrega pouco competitiva",
+      "Capacidade de entrega insuficiente nos horários de pico",
     ],
     action:
       "Avaliar prazo e custo por distância e ajustar o raio à capacidade logística antes de expandir a cobertura.",
@@ -130,7 +145,7 @@ export const diagnosticStatus = {
 const section = z.object({
   id: z.string().max(30),
   status: z.enum(["pending", "good", "attention", "critical"]),
-  checks: z.array(z.string().max(150)).max(8),
+  checks: z.array(z.string().max(150)).max(16),
   notes: z.string().max(900),
   recommendation: z.string().max(600),
   images: z
@@ -236,4 +251,55 @@ export function diagnosticReady(d: Diagnostic) {
     activeSections(d).length &&
     d.reviewed,
   );
+}
+
+export function toggleDiagnosticProblem(
+  section: Diagnostic["sections"][number],
+  text: string,
+  checked: boolean,
+) {
+  const checks = checked
+    ? [...new Set([...section.checks, text])]
+    : section.checks.filter((t) => t !== text);
+  return {
+    ...section,
+    checks,
+    status: checks.length
+      ? section.status === "critical"
+        ? "critical"
+        : "attention"
+      : "pending",
+  } as Diagnostic["sections"][number];
+}
+export function diagnosticSectionPages(s: Diagnostic["sections"][number]) {
+  type Part = {
+    image?: Diagnostic["sections"][number]["images"][number];
+    checks: string[];
+    notes: string;
+    recommendation: string;
+  };
+  const parts: Part[] = [];
+  const count = Math.max(1, s.images.length, Math.ceil(s.checks.length / 5));
+  for (let i = 0; i < count; i++)
+    parts.push({
+      image: s.images[i],
+      checks: s.checks.slice(i * 5, i * 5 + 5),
+      notes: "",
+      recommendation: "",
+    });
+  for (const field of ["notes", "recommendation"] as const) {
+    if (!s[field]) continue;
+    let target = parts[parts.length - 1];
+    const used =
+      target.checks.join(" ").length +
+      target.notes.length +
+      target.recommendation.length;
+    const budget = target.image ? 180 : 1450;
+    if (used + s[field].length > budget) {
+      target = { checks: [], notes: "", recommendation: "" };
+      parts.push(target);
+    }
+    target[field] = s[field];
+  }
+  return parts;
 }

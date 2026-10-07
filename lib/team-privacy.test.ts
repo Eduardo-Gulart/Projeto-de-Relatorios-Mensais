@@ -1,0 +1,12 @@
+import {beforeEach,expect,it,vi} from 'vitest';
+import {DatabaseSync} from 'node:sqlite';
+const state=vi.hoisted(()=>({db:null as unknown as DatabaseSync}));
+vi.mock('cloudflare:workers',()=>({env:{}}));
+vi.mock('./storage',()=>({identity:()=>'',database:()=>({prepare:(sql:string)=>({bind:(...args:unknown[])=>({first:async()=>state.db.prepare(sql).get(...args as never[]),all:async()=>({results:state.db.prepare(sql).all(...args as never[])})})})})}));
+import {visibleReports,allowReport,imageKey,storesFor,allowStore,Access} from './team';
+const alice:Access={subject:'alice',email:'alice@test.com',admin:true,team:true},bob:Access={subject:'bob',email:'bob@test.com',admin:false,team:true};
+beforeEach(()=>{state.db?.close();state.db=new DatabaseSync(':memory:');state.db.exec(`CREATE TABLE reports(id TEXT,owner TEXT,payload TEXT,updated TEXT);CREATE TABLE team_stores(id TEXT,name TEXT,assignee TEXT);CREATE TABLE team_assets(id TEXT,owner TEXT,store_id TEXT);INSERT INTO team_stores VALUES('a','Loja A','alice@test.com'),('b','Loja B','bob@test.com');INSERT INTO reports VALUES('r1','alice','{"storeId":"a","store":"Loja A"}','1'),('r2','bob','{"storeId":"a","store":"Loja A"}','2'),('r3','bob','{"storeId":"b","store":"Loja B"}','3');INSERT INTO team_assets VALUES('img-a','alice','a'),('img-b','bob','a');`)});
+it('admin e integrante recebem somente seus próprios relatórios, mesmo na mesma loja',async()=>{expect((await visibleReports(alice)).map(r=>r.owner)).toEqual(['alice']);expect((await visibleReports(bob)).map(r=>r.owner)).toEqual(['bob','bob'])});
+it('bloqueia acesso direto ao relatório de outro autor, inclusive para admin',async()=>{await expect(allowReport(alice,{owner:'bob',payload:'{}'})).rejects.toMatchObject({status:404});await expect(allowReport(bob,{owner:'alice',payload:'{}'})).rejects.toMatchObject({status:404});await expect(allowReport(alice,{owner:'alice',payload:'{}'})).resolves.toBeUndefined()});
+it('prints também respeitam autoria e não apenas a loja',async()=>{await expect(imageKey(alice,'img-b')).rejects.toMatchObject({status:404});await expect(imageKey(alice,'img-a','a')).resolves.toBe('alice/img-a');await expect(imageKey(alice,'img-a','b')).rejects.toMatchObject({status:400})});
+it('lojas do espaço pessoal não se misturam com a administração da equipe',async()=>{expect((await storesFor(alice)).map(s=>s.id)).toEqual(['a']);expect((await storesFor(bob)).map(s=>s.id)).toEqual(['b']);await expect(allowStore(alice,'b')).rejects.toMatchObject({status:404})});

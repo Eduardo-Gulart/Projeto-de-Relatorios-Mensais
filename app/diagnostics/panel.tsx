@@ -9,6 +9,7 @@ import {
   suggestedDiagnosticActions,
   diagnosticReady,
   activeSections,
+  toggleDiagnosticProblem,
 } from "@/lib/diagnostic";
 import DiagnosticDocument from "./document";
 import { downloadReport } from "@/lib/download";
@@ -302,25 +303,34 @@ export default function DiagnosticPanel() {
                     />
                   </label>
                 </div>
-                <label>
-                  Visão executiva
-                  <textarea
-                    maxLength={700}
-                    rows={4}
-                    placeholder="Resuma a situação da loja e a principal prioridade para o início da gestão."
-                    value={d.summary}
-                    onChange={(e) => change({ summary: e.target.value })}
-                  />
-                  <small>{d.summary.length}/700</small>
-                </label>
+                <details className="diag-optional">
+                  <summary>Adicionar resumo geral (opcional)</summary>
+                  <label>
+                    Visão executiva
+                    <textarea
+                      maxLength={700}
+                      rows={4}
+                      placeholder="Resuma a situação da loja e a principal prioridade para o início da gestão."
+                      value={d.summary}
+                      onChange={(e) => change({ summary: e.target.value })}
+                    />
+                    <small>{d.summary.length}/700</small>
+                  </label>
+                </details>
               </section>
               <section className="panel">
-                <h3>Avaliação por área</h3>
+                <h3>Marque os problemas que encontrou</h3>
                 <p>
-                  Marque somente o que foi verificado. Seções vazias ficam fora
-                  do PDF. Os prints são anexos visuais; a leitura automática dos
-                  relatórios mensais continua na aba original.
+                  Siga a ordem do diagnóstico: escolha os problemas, anexe o
+                  print da área e avance. Os itens marcados aparecem no PDF
+                  abaixo do print. Você só escreve se quiser acrescentar algo.
                 </p>
+                <div className="diag-selection-summary" role="status">
+                  {d.sections.reduce((n, s) => n + s.checks.length, 0)}{" "}
+                  problemas marcados ·{" "}
+                  {d.sections.filter((s) => s.status !== "pending").length} de
+                  10 áreas avaliadas
+                </div>
                 {d.sections.map((s, index) => {
                   const def = diagnosticSections.find((t) => t.id === s.id)!;
                   const update = (p: Partial<typeof s>) =>
@@ -330,85 +340,124 @@ export default function DiagnosticPanel() {
                       ),
                     });
                   return (
-                    <details className="diag-section-editor" key={s.id}>
-                      <summary>
-                        <span>
-                          {def.title}
-                          <small>{def.hint}</small>
+                    <section
+                      className="diag-section-editor"
+                      key={s.id}
+                      aria-label={def.title}
+                    >
+                      <div className="diag-area-title">
+                        <span className="diag-area-number">
+                          {String(index + 1).padStart(2, "0")}
                         </span>
+                        <div>
+                          <h4>{def.title}</h4>
+                          <p>{def.hint}</p>
+                        </div>
                         <span className={"diag-state diag-state-" + s.status}>
-                          {diagnosticStatus[s.status]}
+                          {s.checks.length
+                            ? `${s.checks.length} problema(s)`
+                            : diagnosticStatus[s.status]}
                         </span>
-                      </summary>
-                      <label>
-                        Situação da área
-                        <select
-                          value={s.status}
-                          onChange={(e) =>
-                            update({
-                              status: e.target.value as typeof s.status,
-                            })
-                          }
-                        >
-                          {Object.entries(diagnosticStatus).map(
-                            ([key, label]) => (
-                              <option key={key} value={key}>
-                                {label}
-                              </option>
-                            ),
-                          )}
-                        </select>
-                      </label>
-                      <div className="diag-checks">
-                        {def.checks.map((text) => (
-                          <label key={text}>
+                      </div>
+                      <div className="diag-checks diag-problem-grid">
+                        {[...new Set([...def.checks, ...s.checks])].map(
+                          (text) => (
+                            <label
+                              key={text}
+                              className={
+                                s.checks.includes(text) ? "is-checked" : ""
+                              }
+                            >
+                              <input
+                                type="checkbox"
+                                checked={s.checks.includes(text)}
+                                onChange={(e) =>
+                                  update(
+                                    toggleDiagnosticProblem(
+                                      s,
+                                      text,
+                                      e.target.checked,
+                                    ),
+                                  )
+                                }
+                              />
+                              <span>{text}</span>
+                            </label>
+                          ),
+                        )}
+                      </div>
+                      <div className="diag-area-options">
+                        <label>
+                          <input
+                            type="checkbox"
+                            disabled={s.checks.length > 0}
+                            checked={s.status === "good"}
+                            onChange={(e) =>
+                              update({
+                                status: e.target.checked ? "good" : "pending",
+                              })
+                            }
+                          />
+                          Conferi e não encontrei problemas nesta área
+                        </label>
+                        {s.checks.length > 0 && (
+                          <label>
                             <input
                               type="checkbox"
-                              checked={s.checks.includes(text)}
+                              checked={s.status === "critical"}
                               onChange={(e) =>
                                 update({
-                                  checks: e.target.checked
-                                    ? [...s.checks, text]
-                                    : s.checks.filter((t) => t !== text),
-                                  status:
-                                    e.target.checked && s.status === "pending"
-                                      ? "attention"
-                                      : s.status,
+                                  status: e.target.checked
+                                    ? "critical"
+                                    : "attention",
                                 })
                               }
                             />
-                            {text}
+                            Tratar como prioridade alta
                           </label>
-                        ))}
+                        )}
                       </div>
-                      <label>
-                        Leitura da gestão
-                        <textarea
-                          maxLength={900}
-                          rows={4}
-                          value={s.notes}
-                          onChange={(e) => update({ notes: e.target.value })}
-                        />
-                        <small>{s.notes.length}/900</small>
-                      </label>
-                      <label>
-                        Direção recomendada
-                        <textarea
-                          maxLength={600}
-                          rows={3}
-                          value={s.recommendation}
-                          onChange={(e) =>
-                            update({ recommendation: e.target.value })
-                          }
-                        />
-                      </label>
-                      <button
-                        className="secondary"
-                        disabled={!!s.recommendation}
-                        onClick={() => update({ recommendation: def.action })}
-                      >
-                        Inserir sugestão de ação
-                      </button>
+                      <details className="diag-optional">
+                        <summary>
+                          Outro problema ou observação (opcional)
+                          {s.notes ? " · preenchido" : ""}
+                        </summary>
+                        <label>
+                          Detalhes adicionais
+                          <textarea
+                            maxLength={900}
+                            rows={3}
+                            value={s.notes}
+                            placeholder="Descreva somente o que não está nas opções acima."
+                            onChange={(e) => update({ notes: e.target.value })}
+                          />
+                          <small>{s.notes.length}/900</small>
+                        </label>
+                      </details>
+                      <details className="diag-optional">
+                        <summary>
+                          Recomendação para esta área (opcional)
+                          {s.recommendation ? " · preenchida" : ""}
+                        </summary>
+                        <label>
+                          O que fazer
+                          <textarea
+                            maxLength={600}
+                            rows={3}
+                            value={s.recommendation}
+                            onChange={(e) =>
+                              update({ recommendation: e.target.value })
+                            }
+                          />
+                        </label>
+                        <button
+                          className="secondary"
+                          disabled={!!s.recommendation}
+                          onClick={() => update({ recommendation: def.action })}
+                        >
+                          Inserir sugestão de ação
+                        </button>
+                      </details>
                       <div className="diag-upload">
                         <label>
                           Anexar print (PNG/JPG, até 10 MB, máximo 3 por área)
@@ -455,7 +504,7 @@ export default function DiagnosticPanel() {
                           </div>
                         ))}
                       </div>
-                    </details>
+                    </section>
                   );
                 })}
               </section>
@@ -472,7 +521,7 @@ export default function DiagnosticPanel() {
                       change({ actions: suggestedDiagnosticActions(d) })
                     }
                   >
-                    Sugerir pelas áreas em atenção
+                    Montar plano com os problemas marcados
                   </button>
                 </div>
                 {d.actions.map((a, i) => {

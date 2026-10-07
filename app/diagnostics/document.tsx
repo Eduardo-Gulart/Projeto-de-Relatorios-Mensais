@@ -4,6 +4,7 @@ import {
   activeSections,
   diagnosticSections,
   diagnosticStatus,
+  diagnosticSectionPages,
 } from "@/lib/diagnostic";
 import { EditorialPage } from "@/app/report-v2/components";
 import "./diagnostics.css";
@@ -95,51 +96,58 @@ export default function DiagnosticDocument({ d }: { d: Diagnostic }) {
           </div>
         </EditorialPage>
       )}
-      {sections.map((s, index) => {
-        const def = diagnosticSections.find((t) => t.id === s.id)!;
-        return (
-          <EditorialPage key={s.id} {...shared} page={++page}>
+      {sections.flatMap((s, index) =>
+        diagnosticSectionPages(s).map((part, partIndex) => (
+          <EditorialPage key={s.id + "-" + partIndex} {...shared} page={++page}>
             <div className="diag-sheet">
               <div className="diag-kicker">
-                ANÁLISE DA OPERAÇÃO / {String(index + 1).padStart(2, "0")}
+                DIAGNÓSTICO / {String(index + 1).padStart(2, "0")}
+                {partIndex ? " · CONTINUAÇÃO" : ""}
               </div>
-              <h2>{def.title}</h2>
+              <h2>{diagnosticSections.find((t) => t.id === s.id)!.title}</h2>
               <div className={"diag-state diag-state-" + s.status}>
                 {diagnosticStatus[s.status]}
               </div>
-              {s.checks.length > 0 && (
+              {part.image && (
+                <figure className="diag-inline-evidence">
+                  <img
+                    src={part.image.url}
+                    alt={part.image.caption || "Print da área analisada"}
+                  />
+                  {part.image.caption && (
+                    <figcaption>{part.image.caption}</figcaption>
+                  )}
+                </figure>
+              )}
+              {part.checks.length > 0 && (
                 <div className="diag-findings">
-                  <h3>Pontos identificados</h3>
-                  {s.checks.map((t) => (
-                    <p key={t}>• {t}</p>
+                  <h3>Problemas identificados</h3>
+                  {part.checks.map((text) => (
+                    <p key={text}>• {text}</p>
                   ))}
                 </div>
               )}
-              {s.notes && (
+              {part.notes && (
                 <div className="diag-notes">
-                  <h3>Leitura da gestão</h3>
-                  <p>{s.notes}</p>
+                  <h3>Observações da gestão</h3>
+                  <p>{part.notes}</p>
                 </div>
               )}
-              {s.recommendation && (
+              {part.recommendation && (
                 <div className="diag-recommendation">
-                  <h3>Direção recomendada</h3>
-                  <p>{s.recommendation}</p>
+                  <h3>Ação recomendada</h3>
+                  <p>{part.recommendation}</p>
                 </div>
               )}
-              {!s.notes && !s.checks.length && !s.recommendation && (
-                <p>Seção registrada para análise das evidências anexadas.</p>
-              )}
-              {s.images.length > 0 && (
-                <p className="diag-scope">
-                  {s.images.length} evidência(s) desta área no anexo ao final do
-                  diagnóstico.
+              {s.status === "good" && !part.checks.length && !part.notes && (
+                <p>
+                  Nenhum problema identificado nesta área durante a conferência.
                 </p>
               )}
             </div>
           </EditorialPage>
-        );
-      })}
+        )),
+      )}
       {actionGroups.map((items, i) => (
         <EditorialPage key={"actions" + i} {...shared} page={++page}>
           <div className="diag-sheet">
@@ -178,27 +186,6 @@ export default function DiagnosticDocument({ d }: { d: Diagnostic }) {
           </div>
         </EditorialPage>
       ))}
-      {sections.flatMap((s) =>
-        s.images.map((image, i) => (
-          <EditorialPage key={s.id + i} {...shared} page={++page}>
-            <div className="diag-sheet">
-              <div className="diag-kicker">
-                EVIDÊNCIA / {i + 1} DE {s.images.length}
-              </div>
-              <h2>{diagnosticSections.find((t) => t.id === s.id)!.title}</h2>
-              <figure className="diag-evidence">
-                <img
-                  src={image.url}
-                  alt={image.caption || "Print da análise"}
-                />
-                <figcaption>
-                  {image.caption || "Print fornecido pela gestão."}
-                </figcaption>
-              </figure>
-            </div>
-          </EditorialPage>
-        )),
-      )}
     </div>
   );
 }

@@ -152,3 +152,5 @@ describe("diagnóstico inicial", () => {
     expect((await POST(request(d))).status).toBe(400);
   });
 });
+
+it('desmarcar o último problema remove atenção automática sem apagar textos',async()=>{const {toggleDiagnosticProblem,diagnosticSectionPages}=await import('./diagnostic');const s=draft().sections[0];s.notes='Nota preservada';const checked=toggleDiagnosticProblem(s,'Capa pouco atrativa',true);expect(checked.status).toBe('attention');const unchecked=toggleDiagnosticProblem(checked,'Capa pouco atrativa',false);expect(unchecked.status).toBe('pending');expect(unchecked.notes).toBe('Nota preservada');checked.images=[{url:'/api/diagnostic-uploads?id='+crypto.randomUUID(),caption:'Perfil'}];checked.checks=Array.from({length:12},(_,i)=>'Problema '+i);checked.notes='Texto longo '.repeat(80);const parts=diagnosticSectionPages(checked);expect(parts[0].image).toEqual(checked.images[0]);expect(parts.flatMap(p=>p.checks)).toEqual(checked.checks);expect(parts.map(p=>p.notes).join('')).toBe(checked.notes)});
