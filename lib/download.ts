@@ -144,8 +144,24 @@ export async function downloadReport(
   ]);
   const source = document.querySelector(selector);
   if (!source) throw new Error("Abra a prévia antes de baixar o PDF.");
+  // Diagnostic pagination waits for fonts and images; monthly reports are unchanged.
+  if (source instanceof HTMLElement && source.dataset.diagnosticLayout) {
+    const deadline = Date.now() + 20000;
+    while (
+      source.dataset.diagnosticLayout === "pending" &&
+      Date.now() < deadline
+    )
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    if (source.dataset.diagnosticLayout !== "ready")
+      throw new Error(
+        source.dataset.layoutError ||
+          "Aguarde a organização das páginas do diagnóstico e tente novamente.",
+      );
+  }
   const root = source.cloneNode(true) as HTMLElement;
   root.className = "report-document export-root";
+  if (source.hasAttribute("data-diagnostic-layout"))
+    root.classList.add("diag-compact-document");
   root.style.cssText = `position:absolute;left:-10000px;top:0;width:${PAPER_WIDTH}px;max-width:none;background:white;color:#202d3a;`;
   document.body.appendChild(root);
   try {
@@ -251,7 +267,9 @@ export async function downloadReport(
     }
     pdf.setProperties({
       title: filename,
-      subject: "Relatório mensal de desempenho comercial",
+      subject: source.hasAttribute("data-diagnostic-layout")
+        ? "Diagnóstico de entrada na gestão"
+        : "Relatório mensal de desempenho comercial",
       creator: "Relata",
     });
     return {

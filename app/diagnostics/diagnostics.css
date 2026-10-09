@@ -562,15 +562,246 @@
 }
 
 /* Compact editorial rhythm for diagnostic evidence and its consolidated analysis. */
-.report-document .diag-section-sheet .diag-kicker { margin: 10px 0 12px; }
-.report-document .diag-section-sheet h2 { font-size: 30px; margin-bottom: 10px; }
-.report-document .diag-section-sheet .diag-state { margin-bottom: 14px; }
-.report-document .diag-evidence-group { display: grid; gap: 10px; margin-bottom: 12px; }
-.report-document .diag-evidence-group .diag-inline-evidence { margin: 0; }
-.report-document .diag-evidence-group img { max-height: 260px; border-radius: 4px; }
-.report-document .diag-evidence-group figcaption { margin-top: 4px; line-height: 1.4; }
-.report-document .diag-section-sheet .diag-findings { padding: 12px 16px; margin-bottom: 12px; border-left: 3px solid #820ad1; background: #f7f5fa; }
-.report-document .diag-section-sheet h3 { font-size: 13px; margin-bottom: 6px; }
-.report-document .diag-section-sheet .diag-findings p { margin: 5px 0; }
-.report-document .diag-section-sheet .diag-notes { margin-bottom: 12px; }
-.report-document .diag-section-sheet .diag-recommendation { padding: 12px 16px; }
+.report-document .diag-section-sheet .diag-kicker {
+  margin: 10px 0 12px;
+}
+.report-document .diag-section-sheet h2 {
+  font-size: 30px;
+  margin-bottom: 10px;
+}
+.report-document .diag-section-sheet .diag-state {
+  margin-bottom: 14px;
+}
+.report-document .diag-evidence-group {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.report-document .diag-evidence-group .diag-inline-evidence {
+  margin: 0;
+}
+.report-document .diag-evidence-group img {
+  max-height: 260px;
+  border-radius: 4px;
+}
+.report-document .diag-evidence-group figcaption {
+  margin-top: 4px;
+  line-height: 1.4;
+}
+.report-document .diag-section-sheet .diag-findings {
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  border-left: 3px solid #820ad1;
+  background: #f7f5fa;
+}
+.report-document .diag-section-sheet h3 {
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.report-document .diag-section-sheet .diag-findings p {
+  margin: 5px 0;
+}
+.report-document .diag-section-sheet .diag-notes {
+  margin-bottom: 12px;
+}
+.report-document .diag-section-sheet .diag-recommendation {
+  padding: 12px 16px;
+}
+
+/* Measured continuous layout: sections share the available A4 space. */
+.diag-compact-document .rv2-page.rv2-page {
+  padding: 42px 52px 72px;
+}
+.diag-compact-document .rv2-page .rv2-head {
+  margin-bottom: 18px;
+  font-size: 10px;
+}
+.diag-compact-document .rv2-page .rv2-footer {
+  left: 52px;
+  right: 52px;
+  bottom: 30px;
+  padding-top: 10px;
+}
+.diag-compact-document .diag-flow-running {
+  height: 26px;
+  color: #635c73;
+  font:
+    10px/18px "Relata Mono",
+    monospace;
+  letter-spacing: 0.5px;
+}
+.diag-compact-document .diag-flow {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.diag-compact-document .diag-flow-block {
+  display: flow-root;
+  padding-bottom: 10px;
+  break-inside: avoid;
+}
+.diag-compact-document .diag-flow h1 {
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: -0.6px;
+  margin: 6px 0 12px;
+}
+.diag-compact-document .diag-flow h2 {
+  font-size: 21px;
+  line-height: 1.2;
+  letter-spacing: -0.4px;
+  margin: 0;
+}
+.diag-compact-document .diag-flow h3 {
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 0 0 4px;
+}
+.diag-compact-document .diag-flow p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+.diag-compact-document .diag-flow small {
+  font:
+    500 9px/1.5 "Relata Sans",
+    sans-serif;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #645976;
+  margin: 0 0 4px;
+}
+.diag-compact-document .diag-flow-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  color: #6b0aac;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.diag-compact-document .diag-flow-intro {
+  border-bottom: 2px solid #820ad1;
+  padding-bottom: 14px;
+}
+.diag-compact-document .diag-flow-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 20px;
+  font-size: 11px;
+}
+.diag-compact-document .diag-flow-meta b {
+  display: block;
+  font-size: 9px;
+  text-transform: uppercase;
+  color: #635c73;
+}
+.diag-compact-document .diag-flow-counts {
+  display: flex;
+  gap: 24px;
+  padding: 12px 0 8px;
+  color: #51465f;
+  font-size: 11px;
+}
+.diag-compact-document .diag-flow-counts strong {
+  color: #6b0aac;
+  font-size: 18px;
+  margin-right: 4px;
+}
+.diag-compact-document .diag-flow p.diag-flow-method {
+  font-size: 10px;
+  line-height: 1.4;
+  color: #635c73;
+}
+.diag-compact-document .diag-flow-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid #e1dbea;
+  padding-top: 12px;
+}
+.diag-compact-document .diag-flow-section .diag-state {
+  margin: 0;
+  font-size: 10px;
+}
+.diag-compact-document .diag-flow-image {
+  margin: 0;
+}
+.diag-compact-document .diag-flow-image img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 320px;
+  margin: 0 auto;
+  border: 1px solid #e8e4ef;
+  border-radius: 4px;
+}
+.diag-compact-document .diag-flow-image figcaption {
+  margin-top: 4px;
+  font-size: 10px;
+  color: #635c73;
+  line-height: 1.4;
+}
+.diag-compact-document .diag-flow-finding {
+  display: grid;
+  grid-template-columns: 32% 1fr;
+  gap: 16px;
+  padding: 10px 12px;
+  border-left: 3px solid #820ad1;
+  background: #f7f5fa;
+}
+.diag-compact-document .diag-flow-finding > div {
+  min-width: 0;
+}
+.diag-compact-document .diag-flow-finding h3 {
+  margin: 0;
+  font-weight: 600;
+}
+.diag-compact-document .diag-flow-text {
+  padding: 3px 0;
+}
+.diag-compact-document .diag-flow-summary,
+.diag-compact-document .diag-flow-recommendation {
+  background: #f3e5fc;
+  padding: 10px 12px;
+  border-left: 3px solid #820ad1;
+}
+.diag-compact-document .diag-flow-monitor {
+  padding: 9px 12px;
+  border: 1px solid #ded8e8;
+  border-radius: 4px;
+}
+.diag-compact-document .diag-flow-monitor b {
+  font-size: 11px;
+  color: #4a0785;
+}
+.diag-compact-document .diag-flow-monitor p {
+  font-size: 12px;
+}
+.diag-compact-document .diag-flow-action {
+  border: 1px solid #e1dbea;
+  padding: 12px;
+  border-radius: 4px;
+}
+.diag-compact-document .diag-flow-action-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.diag-compact-document .diag-flow-action-title h3 {
+  margin: 0;
+}
+.diag-compact-document .diag-flow-action-meta {
+  display: flex;
+  gap: 20px;
+  margin-top: 8px;
+  font-size: 10px;
+  color: #635c73;
+}
+@media print {
+  .diag-measure {
+    display: none !important;
+  }
+}

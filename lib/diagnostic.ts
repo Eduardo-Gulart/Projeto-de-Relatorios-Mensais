@@ -271,38 +271,3 @@ export function toggleDiagnosticProblem(
       : "pending",
   } as Diagnostic["sections"][number];
 }
-export function diagnosticSectionPages(s: Diagnostic["sections"][number]) {
-  type Part = {
-    images: Diagnostic["sections"][number]["images"];
-    checks: string[];
-    notes: string;
-    recommendation: string;
-  };
-  const empty = (): Part => ({ images: [], checks: [], notes: "", recommendation: "" });
-  const parts: Part[] = [];
-  // Keep evidence in order; findings only begin after the final screenshot.
-  for (let i = 0; i < s.images.length; i += 2)
-    parts.push({ ...empty(), images: s.images.slice(i, i + 2) });
-  if (!parts.length) parts.push(empty());
-  let target = parts[parts.length - 1];
-  let used = 0;
-  const budget = () => target.images.length === 2 ? 200 : target.images.length === 1 ? 480 : 720;
-  const cost = (text: string) => text.split("\n").reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / 76)) * 23, 0);
-  const reserve = (height: number) => {
-    if (used + height > budget()) { target = empty(); parts.push(target); used = 0; }
-    used += height;
-  };
-  for (const check of s.checks) {
-    reserve(cost(check) + 12 + (target.checks.length ? 0 : 42));
-    target.checks.push(check);
-  }
-  for (const field of ["notes", "recommendation"] as const) {
-    if (!s[field]) continue;
-    // Split long multiline notes without dropping text or overflowing the page.
-    for (const fragment of s[field].match(/[^\n]{1,380}|\n/g) || [s[field]]) {
-      reserve(cost(fragment) + (target[field] ? 0 : 55));
-      target[field] += fragment;
-    }
-  }
-  return parts;
-}
