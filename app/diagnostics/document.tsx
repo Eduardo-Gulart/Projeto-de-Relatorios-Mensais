@@ -99,7 +99,7 @@ export default function DiagnosticDocument({ d }: { d: Diagnostic }) {
       {sections.flatMap((s, index) =>
         diagnosticSectionPages(s).map((part, partIndex) => (
           <EditorialPage key={s.id + "-" + partIndex} {...shared} page={++page}>
-            <div className="diag-sheet">
+            <div className="diag-sheet diag-section-sheet">
               <div className="diag-kicker">
                 DIAGNÓSTICO / {String(index + 1).padStart(2, "0")}
                 {partIndex ? " · CONTINUAÇÃO" : ""}
@@ -108,16 +108,15 @@ export default function DiagnosticDocument({ d }: { d: Diagnostic }) {
               <div className={"diag-state diag-state-" + s.status}>
                 {diagnosticStatus[s.status]}
               </div>
-              {part.image && (
-                <figure className="diag-inline-evidence">
-                  <img
-                    src={part.image.url}
-                    alt={part.image.caption || "Print da área analisada"}
-                  />
-                  {part.image.caption && (
-                    <figcaption>{part.image.caption}</figcaption>
-                  )}
-                </figure>
+              {part.images.length > 0 && (
+                <div className="diag-evidence-group">
+                  {part.images.map((image, imageIndex) => (
+                    <figure className="diag-inline-evidence" key={imageIndex}>
+                      <img src={image.url} alt={image.caption || "Print da área analisada"} />
+                      {image.caption && <figcaption>{image.caption}</figcaption>}
+                    </figure>
+                  ))}
+                </div>
               )}
               {part.checks.length > 0 && (
                 <div className="diag-findings">
@@ -139,7 +138,7 @@ export default function DiagnosticDocument({ d }: { d: Diagnostic }) {
                   <p>{part.recommendation}</p>
                 </div>
               )}
-              {s.status === "good" && !part.checks.length && !part.notes && (
+              {s.status === "good" && partIndex === diagnosticSectionPages(s).length - 1 && !part.checks.length && !part.notes && (
                 <p>
                   Nenhum problema identificado nesta área durante a conferência.
                 </p>

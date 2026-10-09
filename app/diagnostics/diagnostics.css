@@ -560,3 +560,17 @@
     min-width: 150px;
   }
 }
+
+/* Compact editorial rhythm for diagnostic evidence and its consolidated analysis. */
+.report-document .diag-section-sheet .diag-kicker { margin: 10px 0 12px; }
+.report-document .diag-section-sheet h2 { font-size: 30px; margin-bottom: 10px; }
+.report-document .diag-section-sheet .diag-state { margin-bottom: 14px; }
+.report-document .diag-evidence-group { display: grid; gap: 10px; margin-bottom: 12px; }
+.report-document .diag-evidence-group .diag-inline-evidence { margin: 0; }
+.report-document .diag-evidence-group img { max-height: 260px; border-radius: 4px; }
+.report-document .diag-evidence-group figcaption { margin-top: 4px; line-height: 1.4; }
+.report-document .diag-section-sheet .diag-findings { padding: 12px 16px; margin-bottom: 12px; border-left: 3px solid #820ad1; background: #f7f5fa; }
+.report-document .diag-section-sheet h3 { font-size: 13px; margin-bottom: 6px; }
+.report-document .diag-section-sheet .diag-findings p { margin: 5px 0; }
+.report-document .diag-section-sheet .diag-notes { margin-bottom: 12px; }
+.report-document .diag-section-sheet .diag-recommendation { padding: 12px 16px; }
