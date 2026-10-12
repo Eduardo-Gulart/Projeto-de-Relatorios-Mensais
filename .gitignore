@@ -50,3 +50,5 @@ next-env.d.ts
 *.tsbuildinfo
 *.log
 .dev.vars*
+/docs/referencia/
+/output/

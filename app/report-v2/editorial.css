@@ -1,0 +1,651 @@
+@font-face {
+  font-family: "Relata Display";
+  src: url("/fonts/barlow-condensed-800.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Relata Sans";
+  src: url("/fonts/ibm-plex-sans.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Relata Sans";
+  src: url("/fonts/ibm-plex-sans-500.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Relata Sans";
+  src: url("/fonts/ibm-plex-sans-600.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Relata Mono";
+  src: url("/fonts/ibm-plex-mono-400.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+.report-document .rv2-page.rv2-page {
+  --report-dark: #111111;
+  --report-light: #f3f2ee;
+  --report-amber: #f2aa00;
+  --report-gold: #9a6a00;
+  --report-positive: #26884f;
+  --report-negative: #c84030;
+  --report-bar: #bcb9b0;
+  --report-track: #2a2927;
+  --report-cover: #faf2e8;
+  --report-muted: #6e6b64;
+  --report-line: #d7d5cf;
+  --report-accent: var(--report-gold);
+  box-sizing: border-box;
+  border: 0;
+  width: 794px;
+  height: 1123px;
+  position: relative;
+  padding: 56px 64px 80px;
+  margin: 0 0 24px;
+  background: var(--report-light);
+  color: var(--report-dark);
+  font:
+    400 14px/1.55 "Relata Sans",
+    sans-serif;
+  overflow-wrap: anywhere;
+}
+.rv2-page *,
+.rv2-page *::before,
+.rv2-page *::after {
+  box-sizing: border-box;
+}
+.report-document .rv2-page.rv2-dark {
+  background: var(--report-dark);
+  color: var(--report-light);
+  --report-muted: #bcb9b0;
+  --report-line: #2a2927;
+  --report-accent: var(--report-amber);
+}
+.report-document .rv2-page .rv2-head,
+.report-document .rv2-page .rv2-footer,
+.report-document .rv2-page .rv2-label,
+.report-document .rv2-page .rv2-eyebrow,
+.report-document .rv2-page .rv2-insights dt {
+  font:
+    400 11px/1.5 "Relata Mono",
+    monospace;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.report-document .rv2-page .rv2-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  color: var(--report-muted);
+  margin-bottom: 36px;
+}
+.report-document .rv2-page .rv2-head > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.report-document .rv2-page .rv2-head > span {
+  flex-shrink: 0;
+}
+.report-document .rv2-page .rv2-marks {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 6px;
+}
+.report-document .rv2-page .rv2-marks img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+.report-document .rv2-page .rv2-dark .rv2-marks img {
+  border: 1px solid rgba(243, 242, 238, 0.4);
+}
+.report-document .rv2-page .rv2-eyebrow {
+  margin: 0 0 10px;
+  color: var(--report-accent);
+}
+.report-document .rv2-page .rv2-title {
+  font:
+    800 64px/0.95 "Relata Display",
+    sans-serif;
+  text-transform: uppercase;
+  margin: 0 0 38px;
+  letter-spacing: -0.015em;
+}
+.report-document .rv2-page .rv2-highlight {
+  color: var(--report-accent);
+}
+.report-document .rv2-page .rv2-rule {
+  border-top: 3px solid currentColor;
+}
+.report-document .rv2-page .rv2-dark .rv2-rule {
+  border-top: 1px solid var(--report-line);
+}
+.report-document .rv2-page .rv2-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.report-document .rv2-page .rv2-kpi {
+  padding: 20px 18px 24px;
+  min-height: 142px;
+  border-bottom: 1px solid var(--report-line);
+}
+.report-document .rv2-page .rv2-kpi:nth-child(3n + 1) {
+  padding-left: 0;
+}
+.report-document .rv2-page .rv2-kpi:not(:nth-child(3n + 1)) {
+  border-left: 1px solid var(--report-line);
+}
+.report-document .rv2-page .rv2-label {
+  color: var(--report-muted);
+}
+.report-document .rv2-page .rv2-value {
+  font:
+    800 56px/1.15 "Relata Display",
+    sans-serif;
+  margin: 4px 0 8px;
+  white-space: nowrap;
+}
+.report-document .rv2-page .rv2-value small {
+  font-size: 28px;
+}
+.report-document .rv2-page .rv2-delta {
+  font:
+    400 11px/1.6 "Relata Mono",
+    monospace;
+}
+.report-document .rv2-page .rv2-positive {
+  color: var(--report-positive);
+}
+.report-document .rv2-page .rv2-negative {
+  color: var(--report-negative);
+}
+.report-document .rv2-page .rv2-neutral {
+  color: var(--report-muted);
+}
+.report-document .rv2-page .rv2-callout {
+  margin-top: 34px;
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 20px;
+  background: var(--report-dark);
+  color: var(--report-light);
+  padding: 28px;
+}
+.report-document .rv2-page .rv2-callout .rv2-label {
+  color: var(--report-amber);
+}
+.report-document .rv2-page .rv2-callout p {
+  margin: 0;
+}
+.report-document .rv2-page .rv2-callout strong {
+  font-weight: 600;
+}
+.report-document .rv2-page .rv2-insights {
+  margin: 24px 0;
+}
+.report-document .rv2-page .rv2-insights > div,
+.report-document .rv2-page .rv2-missing {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--report-line);
+}
+.report-document .rv2-page .rv2-insights dt,
+.report-document .rv2-page .rv2-insights dd {
+  margin: 0;
+}
+.report-document .rv2-page .rv2-unavailable {
+  font:
+    400 12px "Relata Mono",
+    monospace;
+  padding: 22px 0;
+  color: var(--report-muted);
+}
+.report-document .rv2-page .rv2-footer {
+  position: absolute;
+  bottom: 36px;
+  left: 64px;
+  right: 64px;
+  border-top: 1px solid var(--report-line);
+  padding-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  color: var(--report-muted);
+  font-size: 9px;
+}
+.rv2-demo {
+  padding: 24px;
+  background: #e6e5e1;
+  min-height: 100vh;
+}
+.rv2-demo-toolbar {
+  max-width: 794px;
+  margin: 0 auto 24px;
+}
+.rv2-demo-scroll {
+  overflow: auto;
+}
+.rv2-demo .report-document {
+  width: 794px;
+  margin: auto;
+}
+
+.report-document .rv2-page {
+  border-radius: 0;
+  box-shadow: none;
+}
+.report-document .rv2-page .rv2-content {
+  padding: 0;
+  margin: 0;
+  max-width: none;
+  width: auto;
+}
+.report-document .rv2-page .rv2-head {
+  background: none;
+  padding: 0;
+  border: 0;
+  font-size: 11px;
+}
+.report-document .rv2-page .rv2-title {
+  background: none;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+}
+.report-document .rv2-page .rv2-footer {
+  margin: 0;
+}
+.report-document .rv2-page .rv2-insights {
+  display: block;
+}
+.report-document .rv2-page .rv2-insights dd {
+  color: inherit;
+  font-size: 14px;
+}
+.report-document .rv2-cover.rv2-page {
+  padding: 0;
+  background: var(--report-cover);
+}
+.report-document .rv2-page .rv2-cover-image {
+  display: block;
+  width: 794px;
+  height: 239px;
+  max-height: none;
+  object-fit: fill;
+}
+.report-document .rv2-page .rv2-cover-body {
+  padding: 55px 64px;
+}
+.report-document .rv2-page .rv2-cover-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--report-line);
+  gap: 30px 36px;
+  padding-top: 28px;
+  margin-top: 46px;
+  margin-bottom: 38px;
+}
+.report-document .rv2-page .rv2-cover-meta strong {
+  display: block;
+  font:
+    800 28px/1.15 "Relata Display",
+    sans-serif;
+  text-transform: uppercase;
+  margin: 10px 0;
+}
+.report-document .rv2-page .rv2-cover-meta p {
+  margin: 0;
+  font-size: 13px;
+}
+.report-document .rv2-page .rv2-funnel {
+  margin-top: 28px;
+}
+.report-document .rv2-page .rv2-funnel-row {
+  display: grid;
+  grid-template-columns: 150px 1fr 94px;
+  gap: 14px;
+  align-items: center;
+}
+.report-document .rv2-page .rv2-funnel-track {
+  height: 45px;
+  background: var(--report-track);
+  position: relative;
+}
+.report-document .rv2-page .rv2-funnel-bar {
+  height: 45px;
+  background: var(--report-light);
+}
+.report-document .rv2-page .rv2-funnel-track strong {
+  position: absolute;
+  left: 8px;
+  top: 0;
+  font:
+    600 24px/1.4 "Relata Sans",
+    sans-serif;
+  color: #111;
+  background: #f3f2ee;
+  padding: 2px 4px;
+}
+.report-document .rv2-page .rv2-funnel-old {
+  font:
+    400 10px/1.5 "Relata Mono",
+    monospace;
+  text-align: right;
+  color: var(--report-muted);
+}
+.report-document .rv2-page .rv2-transition {
+  margin: 7px 0 12px 164px;
+  font:
+    400 11px/1.4 "Relata Mono",
+    monospace;
+  min-height: 16px;
+}
+.report-document .rv2-page .rv2-target-mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 2px solid var(--report-amber);
+}
+.report-document .rv2-page .rv2-funnel-bottom {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 25px;
+  margin-top: 24px;
+  border-top: 1px solid var(--report-line);
+  padding-top: 20px;
+}
+.report-document .rv2-page .rv2-hero-number {
+  font:
+    800 64px/1.4 "Relata Display",
+    sans-serif;
+  color: var(--report-amber);
+}
+.report-document .rv2-page .rv2-funnel-bottom .rv2-insights {
+  margin: 0;
+  font-size: 12px;
+}
+.report-document .rv2-page .rv2-funnel-bottom .rv2-insights > div {
+  grid-template-columns: 65px 1fr;
+  padding: 8px 0;
+}
+.report-document .rv2-page .rv2-closing-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 35px;
+  border-top: 1px solid var(--report-line);
+  margin-top: 68px;
+  padding-top: 25px;
+  font:
+    400 11px/1.7 "Relata Mono",
+    monospace;
+  color: var(--report-muted);
+}
+.report-document .rv2-page.rv2-closing .rv2-title {
+  font-size: 92px;
+  margin-top: 150px;
+  max-width: 600px;
+  line-height: 1.02;
+}
+.report-document .rv2-page.rv2-closing p:not(.rv2-eyebrow) {
+  font-size: 17px;
+  line-height: 1.65;
+}
+.report-document .rv2-page .rv2-closing-bottom img {
+  width: 52px;
+  height: 52px;
+}
+.report-document .rv2-page .rv2-small-kpis {
+  margin-bottom: 28px;
+}
+.report-document .rv2-page .rv2-small-kpis .rv2-value {
+  font-size: 36px;
+}
+.report-document .rv2-page .rv2-small-kpis .rv2-kpi {
+  min-height: 110px;
+}
+.report-document .rv2-page .rv2-two-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin-top: 24px;
+}
+.report-document .rv2-page .rv2-two-columns .rv2-insights {
+  margin: 0;
+  font-size: 12px;
+}
+.report-document .rv2-page .rv2-two-columns .rv2-insights > div {
+  grid-template-columns: 65px 1fr;
+  padding: 10px 0;
+}
+.report-document .rv2-page .rv2-two-columns .rv2-insights dd {
+  font-size: 12px;
+}
+.report-document .rv2-page .rv2-chart {
+  margin: 16px 0 24px;
+}
+.report-document .rv2-page .rv2-chart-bars {
+  height: 188px;
+  display: flex;
+  gap: 8px;
+  position: relative;
+}
+.report-document .rv2-page .rv2-chart-column {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 7px;
+  text-align: center;
+  font:
+    400 9px/1.3 "Relata Mono",
+    monospace;
+}
+.report-document .rv2-page .rv2-chart-column > span:last-child {
+  height: 35px;
+}
+.report-document .rv2-page .rv2-chart-track {
+  height: 118px;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  border-bottom: 1px solid var(--report-line);
+}
+.report-document .rv2-page .rv2-chart-track > div {
+  width: 80%;
+  background: var(--report-bar);
+}
+.report-document .rv2-page .rv2-chart-track > div.rv2-current {
+  background: var(--report-amber);
+}
+.report-document .rv2-page .rv2-average {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 2px solid var(--report-dark);
+  pointer-events: none;
+}
+.report-document .rv2-page .rv2-chart-legend {
+  font:
+    400 10px/1.5 "Relata Mono",
+    monospace;
+  margin-top: 7px;
+  color: var(--report-muted);
+}
+.report-document .rv2-page .rv2-quality-bars {
+  display: grid;
+  gap: 18px;
+  margin: 26px 0;
+}
+.report-document .rv2-page .rv2-quality-track {
+  height: 13px;
+  background: var(--report-line);
+  position: relative;
+  margin: 8px 0;
+}
+.report-document .rv2-page .rv2-quality-track > div {
+  height: 100%;
+}
+.report-document .rv2-page .rv2-quality-track > span {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  border-left: 2px solid var(--report-dark);
+}
+.report-document .rv2-page .rv2-good-bar {
+  background: var(--report-positive);
+}
+.report-document .rv2-page .rv2-bad-bar {
+  background: var(--report-negative);
+}
+.report-document .rv2-page .rv2-cost-kpis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin: 22px 0 30px;
+}
+.report-document .rv2-page .rv2-cost-number {
+  font:
+    800 44px/1.2 "Relata Display",
+    sans-serif;
+}
+.report-document .rv2-page .rv2-waterfall > div {
+  display: grid;
+  grid-template-columns: 150px 1fr 110px;
+  gap: 12px;
+  align-items: center;
+  margin: 12px 0;
+}
+.report-document .rv2-page .rv2-waterfall-track {
+  height: 24px;
+  background: var(--report-track);
+  position: relative;
+}
+.report-document .rv2-page .rv2-waterfall-track > div {
+  height: 100%;
+  position: absolute;
+  background: var(--report-bar);
+}
+.report-document .rv2-page .rv2-waterfall-track > .rv2-current {
+  background: var(--report-amber);
+}
+.report-document .rv2-page .rv2-waterfall strong {
+  font-size: 12px;
+  text-align: right;
+}
+.report-document .rv2-page .rv2-cost-ratio {
+  margin-top: 24px;
+}
+.report-document .rv2-page .rv2-cost-ratio strong {
+  font:
+    800 44px/1 "Relata Display",
+    sans-serif;
+  color: var(--report-amber);
+}
+.report-document .rv2-page .rv2-readings h3,
+.report-document .rv2-page .rv2-action h3,
+.report-document .rv2-page .rv2-callout h3 {
+  font:
+    800 25px/1.12 "Relata Display",
+    sans-serif;
+  text-transform: uppercase;
+  margin: 0 0 10px;
+}
+.report-document .rv2-page .rv2-reading {
+  padding-left: 12px;
+  border-left: 2px solid currentColor;
+  margin: 20px 0;
+}
+.report-document .rv2-page .rv2-reading p {
+  color: var(--report-dark);
+  margin: 5px 0;
+  font-size: 13px;
+}
+.report-document .rv2-page .rv2-actions {
+  margin-top: 12px;
+}
+.report-document .rv2-page .rv2-action {
+  display: grid;
+  grid-template-columns: 55px 1fr 145px;
+  gap: 20px;
+  border-bottom: 1px solid var(--report-line);
+  padding: 20px 0;
+}
+.report-document .rv2-page .rv2-action-number {
+  font:
+    800 40px/1 "Relata Display",
+    sans-serif;
+  color: var(--report-gold);
+}
+.report-document .rv2-page .rv2-action p {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 6px 0 0;
+}
+.report-document .rv2-page .rv2-action aside {
+  border-left: 1px solid var(--report-line);
+  padding-left: 16px;
+}
+.report-document .rv2-page .rv2-action aside strong {
+  display: block;
+  margin: 8px 0;
+  font-size: 15px;
+}
+.report-document .rv2-page .rv2-continuation {
+  font-size: 24px;
+  display: block;
+  margin-top: 12px;
+}
+.report-document .rv2-page .rv2-evidence {
+  margin: 24px 0;
+}
+.report-document .rv2-page .rv2-evidence img {
+  width: 100%;
+  height: 270px;
+  max-height: 270px;
+  object-fit: contain;
+  background: white;
+}
+.report-document .rv2-page .rv2-evidence figcaption {
+  font:
+    400 11px/1.5 "Relata Mono",
+    monospace;
+  color: var(--report-muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.report-document .rv2-page:has(.rv2-quality-bars) .rv2-quality-bars {
+  margin: 18px 0;
+  gap: 12px;
+}
+.report-document .rv2-page:has(.rv2-quality-bars) .rv2-insights {
+  margin: 16px 0;
+}
+.report-document .rv2-page:has(.rv2-quality-bars) .rv2-insights > div {
+  padding: 9px 0;
+}
+.report-document .rv2-page:has(.rv2-quality-bars) .rv2-two-columns {
+  margin-top: 16px;
+}
+.report-document .rv2-page .rv2-quality-track > span,
+.report-document .rv2-page .rv2-target-mark {
+  transform: translateX(-2px);
+}
