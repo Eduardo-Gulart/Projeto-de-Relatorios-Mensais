@@ -339,16 +339,17 @@ export function normalizeDiagnostic(input: unknown): Diagnostic {
     if (!s) throw Error("Área antiga desconhecida: " + oldSection.id);
     for (const [index, text] of oldSection.checks.entries()) {
       const optionId = textToOptionId.get(text);
-      const point = optionId
-        ? pointFromOption(optionId)
-        : {
-            ...newOtherPoint(),
-            id: `legacy-${s.id}-${index}`,
-            title: text,
-            severity: (oldSection.status === "critical"
-              ? "A"
-              : "M") as Severity,
-          };
+      const point =
+        optionId && !s.points.some((p) => p.id === optionId)
+          ? pointFromOption(optionId)
+          : {
+              ...newOtherPoint(),
+              id: `legacy-${s.id}-${index}`,
+              title: text,
+              severity: (oldSection.status === "critical"
+                ? "A"
+                : "M") as Severity,
+            };
       point.title = text;
       point.action = legacyGuidance(s.id, text);
       point.kpi = legacyMonitoring(s.id);
@@ -363,6 +364,23 @@ export function normalizeDiagnostic(input: unknown): Diagnostic {
         severity: oldSection.status === "critical" ? "A" : "M",
         evidence: oldSection.notes,
         action: oldSection.recommendation,
+        kpi: legacyMonitoring(s.id),
+        legacy: true,
+      });
+    if (
+      !s.points.length &&
+      ["attention", "critical"].includes(oldSection.status)
+    )
+      s.points.push({
+        ...newOtherPoint(),
+        id: `legacy-${s.id}-status`,
+        title: "Situação registrada no diagnóstico anterior",
+        severity: oldSection.status === "critical" ? "A" : "M",
+        evidence:
+          oldSection.status === "critical"
+            ? "Prioridade alta informada pela gestão anterior; detalhamento pendente."
+            : "Atenção informada pela gestão anterior; detalhamento pendente.",
+        action: "",
         kpi: legacyMonitoring(s.id),
         legacy: true,
       });

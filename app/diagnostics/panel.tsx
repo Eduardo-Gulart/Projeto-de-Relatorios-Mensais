@@ -21,6 +21,12 @@ import {
   optionById,
   rangeDefaults,
 } from "@/lib/diagnostic-catalog";
+import {
+  actionsAfterAreaEdit,
+  executiveSummary,
+  diagnosticWarnings,
+  areaTitle,
+} from "@/lib/diagnostic-rules";
 import DiagnosticDocument from "./document";
 import { downloadReport } from "@/lib/download";
 import "./diagnostics.css";
@@ -32,6 +38,8 @@ export default function DiagnosticPanel() {
     [message, setMessage] = useState(""),
     [dirty, setDirty] = useState(false),
     [preview, setPreview] = useState(false);
+  const summary = executiveSummary(d);
+  const warnings = diagnosticWarnings(d);
   function change(p: Partial<Diagnostic>) {
     setD((v) => ({ ...v, ...p, reviewed: p.reviewed ?? false }));
     setDirty(true);
@@ -66,15 +74,7 @@ export default function DiagnosticPanel() {
     const before = d.sections.find((s) => s.id === id)!;
     const after = updateSection(before, patch);
     const sections = d.sections.map((s) => (s.id === id ? after : s));
-    const actions = d.actions.filter(
-      (a) =>
-        a.areaId !== id ||
-        !a.pointId ||
-        after.points.some((p) => p.id === a.pointId),
-    );
-    for (const point of after.points)
-      if (!before.points.some((p) => p.id === point.id))
-        actions.push(actionForPoint(after, point, d.manager));
+    const actions = actionsAfterAreaEdit(d, before, after);
     change({ sections, actions });
   }
   function editPoint(
@@ -695,8 +695,40 @@ export default function DiagnosticPanel() {
                   </section>
                 );
               })}
+              <section className="panel diag-executive">
+                <h3>Resumo executivo automático</h3>
+                <p>
+                  {summary.assessed} de {summary.total} áreas avaliadas ·{" "}
+                  {summary.counts.critical} com prioridade alta ·{" "}
+                  {summary.counts.attention} em atenção · {summary.counts.good}{" "}
+                  adequadas.
+                </p>
+                <ol>
+                  {summary.priorities.map(({ areaId, point, evidence }) => (
+                    <li key={point.id}>
+                      <strong>
+                        {areaTitle(areaId)} — {point.title}
+                      </strong>
+                      <p>{evidence}</p>
+                    </li>
+                  ))}
+                </ol>
+                {!summary.points.length && (
+                  <p>Marque os pontos para gerar as prioridades.</p>
+                )}
+              </section>
               <section className="panel">
                 <h3>Plano de execução</h3>
+                {warnings.length > 0 && (
+                  <div className="notice" role="status">
+                    <strong>Conferência do plano</strong>
+                    <ul>
+                      {warnings.map((warning, i) => (
+                        <li key={i}>{warning}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 <p>
                   As novas marcações geram ações automaticamente. Ajuste apenas
                   quando necessário.
@@ -725,8 +757,14 @@ export default function DiagnosticPanel() {
                 {d.actions.map((a, i) => (
                   <details className="diag-action-editor" key={a.id}>
                     <summary>
-                      {a.days} dias · {a.title}
+                      {a.days} dias · {areaTitle(a.areaId)} · {a.title}
                     </summary>
+                    {a.legacy && (
+                      <p>
+                        Encaminhamento preservado do diagnóstico anterior. Prazo
+                        original: {a.deadline || "não informado"}.
+                      </p>
+                    )}
                     <label>
                       Ação
                       <textarea
