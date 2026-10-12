@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  diagnosticImageSlices,
   diagnosticParagraphs,
   packDiagnosticBlocks,
 } from "./diagnostic-layout";
@@ -7,15 +8,15 @@ import { guidanceForProblem, monitoringForOption } from "./diagnostic-guidance";
 import { diagnosticSections } from "./diagnostic";
 
 describe("continuous diagnostic pagination", () => {
-  it("balances a sparse final page without changing content order", () => {
+  it("prioritizes filling earlier pages without changing content order", () => {
     expect(
       packDiagnosticBlocks(
         [200, 200, 200, 200, 200, 100].map((height) => ({ height })),
         900,
       ),
     ).toEqual([
-      [0, 1, 2],
-      [3, 4, 5],
+      [0, 1, 2, 3],
+      [4, 5],
     ]);
   });
   it("shares pages between sections without leaving an orphan heading", () => {
@@ -92,5 +93,28 @@ describe("continuous diagnostic pagination", () => {
     expect(guidanceForProblem("Observação antiga")).toContain(
       "Defina o encaminhamento",
     );
+  });
+});
+
+it("keeps a complete area together when it fits on a sheet", () => {
+  expect(
+    packDiagnosticBlocks(
+      [
+        { height: 600 },
+        { height: 50, group: "area", keepNext: true },
+        { height: 300, group: "area" },
+        { height: 200, group: "area" },
+      ],
+      900,
+    ),
+  ).toEqual([[0], [1, 2, 3]]);
+});
+it("slices tall evidence with full pixel coverage", () => {
+  const slices = diagnosticImageSlices(1000, 3000);
+  expect(slices.length).toBe(4);
+  expect(slices.reduce((n, s) => n + s.height, 0)).toBe(2070);
+  slices.forEach((s, i) => {
+    expect(s.height).toBeLessThanOrEqual(650);
+    if (i) expect(s.top).toBe(slices[i - 1].top + slices[i - 1].height);
   });
 });

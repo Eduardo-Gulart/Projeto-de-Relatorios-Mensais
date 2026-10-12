@@ -1,355 +1,574 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
+/* eslint-disable @next/next/no-img-element */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Diagnostic, diagnosticStatus } from "@/lib/diagnostic";
 import {
-  Diagnostic,
-  activeSections,
-  diagnosticSections,
-  diagnosticStatus,
-} from "@/lib/diagnostic";
-import {
-  guidanceForProblem,
-  monitoringForOption,
-} from "@/lib/diagnostic-guidance";
+  executiveSummary,
+  areaTitle,
+  diagnosticWarnings,
+} from "@/lib/diagnostic-rules";
 import {
   diagnosticParagraphs,
   packDiagnosticBlocks,
+  diagnosticImageSlices,
 } from "@/lib/diagnostic-layout";
 import { editorialFonts } from "@/lib/report-editorial";
 import { EditorialPage } from "@/app/report-v2/components";
 import "./diagnostics.css";
-
 type Block = {
   key: string;
   label: string;
+  group?: string;
   keepNext?: boolean;
+  breakBefore?: boolean;
   node: ReactNode;
 };
-function diagnosticBlocks(d: Diagnostic): Block[] {
-  const sections = activeSections(d).map((s) => ({
-    ...s,
-    checks: s.points.map((p) => p.title),
-    notes: s.points
-      .map((p) => p.evidence)
-      .filter(Boolean)
-      .join("\n"),
-    recommendation: s.points
-      .map((p) => p.action)
-      .filter(Boolean)
-      .join("\n"),
-  }));
+type Dimensions = Record<string, { width: number; height: number }>;
+const severityText = { A: "Alta", M: "Média", B: "Baixa" };
+const value = (v: string, u: string) =>
+  v ? `${v} ${u}`.trim() : "Não informada";
+function blocksFor(d: Diagnostic, sizes: Dimensions): Block[] {
   const blocks: Block[] = [];
-  const add = (key: string, label: string, node: ReactNode, keepNext = false) =>
-    blocks.push({ key, label, node, keepNext });
-  const text = (
+  const add = (
     key: string,
     label: string,
-    title: string,
-    value: string,
-    kind = "",
-  ) =>
-    diagnosticParagraphs(value).forEach((part, i) =>
+    node: ReactNode,
+    options: Partial<Block> = {},
+  ) => blocks.push({ key, label, node, ...options });
+  const summary = executiveSummary(d);
+  add(
+    "cover",
+    "Visão executiva",
+    <div className="dv-cover">
+      <div className="dv-kicker">Diagnóstico de entrada · Gestão de lojas</div>
+      <h1>{d.store || "Nome da loja"}</h1>
+      <div className="dv-meta">
+        <div>
+          <small>Responsável</small>
+          {d.manager || "Não informado"}
+        </div>
+        <div>
+          <small>Período analisado</small>
+          {d.period || "Não informado"}
+        </div>
+        <div>
+          <small>Data da análise</small>
+          {d.date.split("-").reverse().join("/")}
+        </div>
+        <div>
+          <small>Conferência</small>
+          {d.reviewed
+            ? "Conferido pela gestão"
+            : "Rascunho — conferência pendente"}
+        </div>
+      </div>
+      <h2>Resumo executivo</h2>
+      <p>
+        {summary.assessed} de {summary.total} áreas avaliadas, com{" "}
+        {summary.points.length} pontos identificados. As prioridades abaixo
+        orientam o início da gestão; os encaminhamentos detalhados acompanham as
+        evidências de cada área.
+      </p>
+      <div className="dv-score">
+        {(["critical", "attention", "good", "pending"] as const).map(
+          (status) => (
+            <div className={"diag-state-" + status} key={status}>
+              <strong>{summary.counts[status]}</strong>
+              <span>{diagnosticStatus[status]}</span>
+            </div>
+          ),
+        )}
+      </div>
+      <div className="dv-area-score">
+        {d.sections.map((s) => (
+          <div key={s.id}>
+            <span>{areaTitle(s.id)}</span>
+            <b className={"diag-state-" + s.status}>
+              {diagnosticStatus[s.status]}
+            </b>
+          </div>
+        ))}
+      </div>
+      <h2>Prioridades de entrada</h2>
+      <div className="dv-priorities">
+        {summary.priorities.map(({ areaId, point, evidence }, i) => (
+          <div key={point.id}>
+            <b className={"dv-priority sev-" + point.severity}>{i + 1}</b>
+            <div>
+              <strong>{point.title}</strong>
+              <p>
+                {areaTitle(areaId)} ·{" "}
+                {evidence.length > 140
+                  ? evidence.slice(0, 140) + "…"
+                  : evidence}
+              </p>
+            </div>
+          </div>
+        ))}
+        {!summary.priorities.length && (
+          <p>
+            Nenhum problema marcado. Manter o acompanhamento das áreas
+            conferidas e concluir as pendentes.
+          </p>
+        )}
+      </div>
+      <p className="dv-method">
+        Faixas e metas são referências editáveis da gestão, não limites oficiais
+        do iFood. Campos sem evidência ou valor permanecem identificados como
+        não informados.
+      </p>
+    </div>,
+    { group: "cover" },
+  );
+  if (d.summary)
+    diagnosticParagraphs(d.summary).forEach((part, i) =>
       add(
-        key + i,
-        label,
-        <div className={"diag-flow-text " + kind}>
-          {i === 0 && <h3>{title}</h3>}
+        "legacy-summary" + i,
+        "Registro anterior",
+        <div className="dv-note">
+          <h3>
+            Contexto preservado do diagnóstico anterior{" "}
+            {i > 0 && "(continuação)"}
+          </h3>
           <p>{part}</p>
         </div>,
       ),
     );
-  add(
-    "intro",
-    "Visão geral",
-    <div className="diag-flow-intro">
-      <div className="diag-flow-eyebrow">Diagnóstico de entrada na gestão</div>
-      <h1>{d.store || "Nome da loja"}</h1>
-      <div className="diag-flow-meta">
-        <span>
-          <b>Responsável</b> {d.manager || "Não informado"}
-        </span>
-        <span>
-          <b>Período</b> {d.period || "Não informado"}
-        </span>
-      </div>
-      <div className="diag-flow-counts">
-        <span>
-          <strong>{sections.length}</strong> áreas avaliadas
-        </span>
-        <span>
-          <strong>
-            {
-              sections.filter(
-                (s) => s.status === "attention" || s.status === "critical",
-              ).length
-            }
-          </strong>{" "}
-          áreas em atenção
-        </span>
-        <span>
-          <strong>{sections.reduce((n, s) => n + s.checks.length, 0)}</strong>{" "}
-          pontos identificados
-        </span>
-      </div>
-      <p className="diag-flow-method">
-        {d.reviewed
-          ? "Conferido pela gestão."
-          : "Rascunho - conferência pendente."}{" "}
-        Os pontos registrados refletem a avaliação informada. Os encaminhamentos
-        são sugestões para validação pela equipe; resultados e metas dependem do
-        acompanhamento.
-      </p>
-    </div>,
-    true,
-  );
-  if (d.summary)
-    text(
-      "summary",
-      "Visão geral",
-      "Síntese da gestão",
-      d.summary,
-      "diag-flow-summary",
-    );
-  sections.forEach((s, index) => {
-    const title = diagnosticSections.find((t) => t.id === s.id)!.title;
-    const label = String(index + 1).padStart(2, "0") + " / " + title;
-    add(
-      s.id + "-head",
-      label,
-      <div className="diag-flow-section">
-        <div>
-          <small>Área {String(index + 1).padStart(2, "0")}</small>
-          <h2>{title}</h2>
-        </div>
-        <span className={"diag-state diag-state-" + s.status}>
-          {diagnosticStatus[s.status]}
-        </span>
-      </div>,
-      true,
-    );
-    s.images.forEach((image, i) =>
-      add(
-        s.id + "-image-" + i,
-        label,
-        <figure className="diag-flow-image">
-          <img src={image.url} alt={image.caption || "Print de " + title} />
-          {image.caption && <figcaption>{image.caption}</figcaption>}
-        </figure>,
-        i === s.images.length - 1,
-      ),
-    );
-    s.checks.forEach((check, i) =>
-      add(
-        s.id + "-check-" + i,
-        label,
-        <div className="diag-flow-finding">
-          <div>
-            <small>Ponto identificado {i + 1}</small>
-            <h3>{check}</h3>
-          </div>
-          <div>
-            <small>Encaminhamento sugerido</small>
-            <p>
-              {s.points[i]?.action ||
-                guidanceForProblem(s.points[i]?.optionId || "")}
-            </p>
-          </div>
-        </div>,
-      ),
-    );
-    if (s.notes) text(s.id + "-notes", label, "Observações da gestão", s.notes);
-    if (s.recommendation)
-      text(
-        s.id + "-recommendation",
-        label,
-        "Orientação definida pela gestão",
-        s.recommendation,
-        "diag-flow-recommendation",
-      );
-    if (s.checks.length)
-      add(
-        s.id + "-monitor",
-        label,
-        <div className="diag-flow-monitor">
-          <b>Como acompanhar</b>
-          <p>
-            {s.points
-              .map((p) => p.kpi || monitoringForOption(p.optionId || ""))
-              .join("; ")}{" "}
-            Registrar a data da alteração e comparar com a situação anterior,
-            sem mudar várias condições ao mesmo tempo.
-          </p>
-        </div>,
-      );
-    else if (!s.notes && !s.recommendation)
-      add(
-        s.id + "-status",
-        label,
-        <div className="diag-flow-text">
-          <p>
-            {s.status === "good"
-              ? "A gestão não identificou problemas nesta área durante a conferência. Manter o acompanhamento da operação."
-              : "Os prints desta área foram anexados. A gestão ainda não detalhou os pontos de análise e as medidas a adotar."}
-          </p>
-        </div>,
-      );
-  });
-  if (d.actions.length) {
-    add(
-      "actions-head",
-      "Plano de execução",
-      <div className="diag-flow-section">
-        <div>
-          <small>Próximos passos</small>
-          <h2>Plano de execução</h2>
-        </div>
-      </div>,
-      true,
-    );
-    d.actions.forEach((a, i) => {
-      const chunks = diagnosticParagraphs(a.description);
-      add(
-        "action" + i,
-        "Plano de execução",
-        <article className="diag-flow-action">
-          <div className="diag-flow-action-title">
-            <h3>
-              {String(i + 1).padStart(2, "0")}. {a.title || "Ação proposta"}
-            </h3>
-            <span className={"diag-priority diag-priority-" + a.priority}>
-              {a.priority === "high"
-                ? "Alta"
-                : a.priority === "medium"
-                  ? "Média"
-                  : "Baixa"}
-            </span>
-          </div>
-          <p>{chunks[0]}</p>
-          <div className="diag-flow-action-meta">
-            <span>
-              <b>Responsável:</b> {a.owner || "A definir"}
-            </span>
-            <span>
-              <b>Prazo:</b> {a.deadline || "A definir"}
-            </span>
-          </div>
-        </article>,
-      );
-      chunks.slice(1).forEach((part, j) =>
+  const imagesFor = (s: Diagnostic["sections"][number], group: string) =>
+    s.images.forEach((image, i) => {
+      const dimensions = sizes[image.url] || { width: 690, height: 400 };
+      const slices = diagnosticImageSlices(dimensions.width, dimensions.height);
+      slices.forEach((slice, j) =>
         add(
-          "action" + i + "-rest" + j,
-          "Plano de execução",
-          <div className="diag-flow-text">
-            <h3>{a.title} (continuação)</h3>
-            <p>{part}</p>
-          </div>,
+          `${group}-image-${i}-${j}`,
+          areaTitle(s.id),
+          <figure className="dv-image">
+            <div className="dv-image-window" style={{ height: slice.height }}>
+              <img
+                src={image.url}
+                alt={`Print ${i + 1} de ${areaTitle(s.id)}`}
+                style={{
+                  height: slice.total,
+                  transform: `translateY(-${slice.top}px)`,
+                }}
+              />
+            </div>
+            <figcaption>
+              Print {i + 1} · {areaTitle(s.id)}
+              {slices.length > 1
+                ? ` · parte ${j + 1}/${slices.length}`
+                : ""} · {image.pointIds.length} ponto(s) vinculado(s)
+              {image.caption ? ` · ${image.caption}` : ""}
+            </figcaption>
+          </figure>,
+          { group },
         ),
       );
     });
+  d.sections
+    .filter((s) => s.status !== "good" && (s.points.length || s.images.length))
+    .forEach((s) => {
+      const title = areaTitle(s.id),
+        group = "area-" + s.id;
+      add(
+        group + "-head",
+        title,
+        <div className="dv-area-head">
+          <div>
+            <small>Análise da área</small>
+            <h2>{title}</h2>
+          </div>
+          <span className={"diag-state diag-state-" + s.status}>
+            {diagnosticStatus[s.status]}
+          </span>
+        </div>,
+        { group, keepNext: true, breakBefore: blocks.length === 1 },
+      );
+      imagesFor(s, group);
+      s.points.forEach((p, i) => {
+        const linked = s.images
+          .map((img, j) => (img.pointIds.includes(p.id) ? j + 1 : null))
+          .filter(Boolean);
+        const evidence =
+          p.evidence ||
+          (p.observed
+            ? `Valor observado: ${value(p.observed, p.unit)}.`
+            : "Ponto marcado pela gestão; valor não informado.");
+        const action =
+          d.actions.find((a) => a.areaId === s.id && a.pointId === p.id)
+            ?.description ||
+          p.action ||
+          "Encaminhamento pendente de definição.";
+        const pieces = [
+          diagnosticParagraphs(evidence),
+          diagnosticParagraphs(action),
+        ];
+        for (
+          let part = 0;
+          part < Math.max(...pieces.map((v) => v.length), 1);
+          part++
+        )
+          add(
+            group + "-point-" + i + "-" + part,
+            title,
+            <div className="dv-point">
+              <div className="dv-point-title">
+                <b>
+                  {i + 1}. {p.title}
+                  {part > 0 ? " (continuação)" : ""}
+                </b>
+                <span className={"diag-severity sev-" + p.severity}>
+                  {severityText[p.severity]}
+                </span>
+              </div>
+              <div className="dv-point-columns">
+                <div>
+                  <small>Evidência</small>
+                  <p>{pieces[0][part] || "—"}</p>
+                  {part === 0 && (
+                    <span className="dv-reference">
+                      {linked.length
+                        ? "Ver print(s) " + linked.join(", ")
+                        : "Sem print vinculado"}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <small>Encaminhamento</small>
+                  <p>{pieces[1][part] || "—"}</p>
+                </div>
+                <div>
+                  <small>Como acompanhar</small>
+                  {part === 0 ? (
+                    <>
+                      <p>{p.kpi || "KPI a definir"}</p>
+                      <dl>
+                        <dt>Linha de base</dt>
+                        <dd>{value(p.baseline || p.observed, p.unit)}</dd>
+                        <dt>Meta para revisão</dt>
+                        <dd>
+                          {p.target
+                            ? value(p.target, p.unit)
+                            : "A definir pela gestão"}
+                        </dd>
+                      </dl>
+                    </>
+                  ) : (
+                    <p>Referência na primeira parte deste ponto.</p>
+                  )}
+                </div>
+              </div>
+            </div>,
+            { group },
+          );
+      });
+      if (!s.points.length)
+        add(
+          group + "-pending",
+          title,
+          <p className="dv-note">
+            Print anexado, mas a área ainda não foi avaliada. Conferir os dados
+            antes de definir o encaminhamento.
+          </p>,
+          { group },
+        );
+    });
+  const good = d.sections.filter((s) => s.status === "good");
+  if (good.length) {
+    add(
+      "good",
+      "Áreas adequadas",
+      <div className="dv-good">
+        <h2>Áreas adequadas</h2>
+        <p>
+          A gestão conferiu estas áreas e não marcou problemas. Manter o
+          acompanhamento e revisar se houver mudança no desempenho.
+        </p>
+        {good.map((s) => (
+          <div className="dv-good-row" key={s.id}>
+            <strong>{areaTitle(s.id)}</strong>
+            <span>
+              ✓ Adequado
+              {s.images.length
+                ? ` · ${s.images.length} print(s) no anexo de evidências`
+                : " · conferência da gestão"}
+            </span>
+          </div>
+        ))}
+      </div>,
+      { group: "good" },
+    );
   }
+  if (d.actions.length) {
+    add(
+      "plan-head",
+      "Plano de execução",
+      <div className="dv-area-head">
+        <div>
+          <small>Próximos passos</small>
+          <h2>Plano de execução</h2>
+          <p>
+            Prazos contados a partir da análise, salvo data específica
+            registrada.
+          </p>
+        </div>
+      </div>,
+      { keepNext: true },
+    );
+    const columns = ([7, 30, 60] as const).map((days) =>
+      d.actions
+        .filter((a) => a.days === days)
+        .flatMap((a) => {
+          const parts = diagnosticParagraphs(
+            a.description || "Ação pendente de definição.",
+          );
+          return parts.map((part, i) => ({ a, part, continuation: i > 0 }));
+        }),
+    );
+    for (let row = 0; row < Math.max(...columns.map((c) => c.length)); row++)
+      add(
+        "plan-row-" + row,
+        "Plano de execução",
+        <div className="dv-plan-columns">
+          {columns.map((col, i) => {
+            const item = col[row];
+            return (
+              <div className="dv-plan-cell" key={i}>
+                <small>{[7, 30, 60][i]} dias</small>
+                {item ? (
+                  <>
+                    <h3>
+                      {item.a.title}
+                      {item.continuation ? " (continuação)" : ""}
+                    </h3>
+                    <span className="dv-reference">
+                      {areaTitle(item.a.areaId)}
+                    </span>
+                    <p>{item.part}</p>
+                    <div className="dv-plan-meta">
+                      Responsável: {item.a.owner || d.manager || "A definir"}
+                      <br />
+                      Prazo: {item.a.deadline || `${item.a.days} dias`}
+                    </div>
+                  </>
+                ) : (
+                  <p className="dv-reference">
+                    {row === 0 ? "Sem ações neste prazo." : "—"}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>,
+      );
+  }
+  const warnings = diagnosticWarnings(d);
+  warnings.forEach((warning, i) =>
+    add(
+      "warning" + i,
+      "Conferência do plano",
+      <p className="dv-note dv-warning">Atenção: {warning}</p>,
+    ),
+  );
+  const review = new Date(d.date + "T12:00:00Z");
+  review.setUTCDate(review.getUTCDate() + 30);
+  add(
+    "closing-head",
+    "Acompanhamento",
+    <div className="dv-area-head">
+      <div>
+        <small>Fechamento</small>
+        <h2>Acompanhamento e revisão em 30 dias</h2>
+        <p>
+          Revisão prevista:{" "}
+          {Number.isNaN(review.getTime())
+            ? "A definir"
+            : review.toLocaleDateString("pt-BR", { timeZone: "UTC" })}
+          . Registrar as alterações, comparar os KPIs com a linha de base e
+          reavaliar as prioridades.
+        </p>
+      </div>
+    </div>,
+    { keepNext: summary.points.length > 0 },
+  );
+  summary.points.forEach(({ areaId, point }, i) =>
+    add(
+      "closing" + i,
+      "Acompanhamento",
+      <div className="dv-kpi-row">
+        <div>
+          <strong>{point.kpi || "KPI a definir"}</strong>
+          <small>
+            {areaTitle(areaId)} · {point.title}
+          </small>
+        </div>
+        <div>
+          <small>Linha de base</small>
+          {value(point.baseline || point.observed, point.unit)}
+        </div>
+        <div>
+          <small>Meta</small>
+          {point.target ? value(point.target, point.unit) : "A definir"}
+        </div>
+      </div>,
+    ),
+  );
+  // Adequate-area screenshots remain available at full width, outside the single summary block.
+  good
+    .filter((s) => s.images.length)
+    .forEach((s) => {
+      const group = "annex-" + s.id;
+      add(
+        group + "-head",
+        "Evidências de áreas adequadas",
+        <div className="dv-area-head">
+          <div>
+            <small>Anexo · Área adequada</small>
+            <h2>{areaTitle(s.id)}</h2>
+          </div>
+          <span className="diag-state diag-state-good">✓ Adequado</span>
+        </div>,
+        { group, keepNext: true },
+      );
+      imagesFor(s, group);
+    });
   return blocks;
 }
-
 export default function DiagnosticDocument({ d }: { d: Diagnostic }) {
-  const blocks = useMemo(() => diagnosticBlocks(d), [d]);
+  const [imageState, setImages] = useState<{
+    key: string;
+    sizes: Dimensions;
+    error?: string;
+  }>({ key: "", sizes: {} });
+  const imageKey = JSON.stringify(
+    d.sections.flatMap((s) => s.images.map((i) => i.url)),
+  );
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const sizes: Dimensions = {};
+        await Promise.all(
+          (JSON.parse(imageKey) as string[]).map(async (url) => {
+            const image = new Image();
+            image.src = url;
+            await image.decode();
+            sizes[url] = {
+              width: image.naturalWidth,
+              height: image.naturalHeight,
+            };
+          }),
+        );
+        if (!cancelled) setImages({ key: imageKey, sizes });
+      } catch {
+        if (!cancelled)
+          setImages({
+            key: imageKey,
+            sizes: {},
+            error:
+              "Um print não pôde ser carregado. Reabra o diagnóstico ou anexe a imagem novamente.",
+          });
+      }
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [imageKey]);
+  const blocks = useMemo(
+    () => blocksFor(d, imageState.sizes),
+    [d, imageState.sizes],
+  );
   const measure = useRef<HTMLDivElement>(null);
   const [layout, setLayout] = useState<{
     blocks: Block[];
     pages: number[][];
     error?: string;
   } | null>(null);
-  const ready = layout?.blocks === blocks;
+  const ready = layout?.blocks === blocks && imageState.key === imageKey;
   const shared = {
     store: d.store || "Nome da loja",
     period: d.date.split("-").reverse().join("/"),
-    source: "Diagnóstico de entrada · Análise da gestão · Confidencial",
+    source: "Diagnóstico de entrada · Confidencial",
   };
   useEffect(() => {
+    if (imageState.key !== imageKey) return;
     let cancelled = false;
     async function paginate() {
       try {
-        const host = measure.current!;
+        if (imageState.error) throw Error(imageState.error);
         await Promise.all(
           editorialFonts.map((font) =>
             document.fonts.load(font, "ÁÉÍÓÚÃÕÇ 0123456789"),
           ),
         );
         await document.fonts.ready;
+        const host = measure.current!;
         await Promise.all(
-          Array.from(host.querySelectorAll("img")).map((image) =>
-            image.decode(),
-          ),
+          Array.from(host.querySelectorAll("img")).map((img) => img.decode()),
         );
         if (cancelled) return;
-        const footer = host.querySelector<HTMLElement>(".rv2-footer")!;
-        const flow = host.querySelector<HTMLElement>(".diag-flow")!;
+        const footer = host.querySelector<HTMLElement>(".rv2-footer")!,
+          flow = host.querySelector<HTMLElement>(".diag-flow")!;
         const capacity =
           Math.floor(
             footer.getBoundingClientRect().top -
               24 -
               flow.getBoundingClientRect().top,
           ) - 2;
-        const heights = Array.from(
+        const measured = Array.from(
           host.querySelectorAll<HTMLElement>("[data-diag-block]"),
         ).map((el, i) => ({
+          ...blocks[i],
           height: Math.ceil(el.getBoundingClientRect().height),
-          keepNext: blocks[i].keepNext,
         }));
-        setLayout({ blocks, pages: packDiagnosticBlocks(heights, capacity) });
-      } catch (error) {
+        setLayout({ blocks, pages: packDiagnosticBlocks(measured, capacity) });
+      } catch (e) {
         if (!cancelled)
-          setLayout({
-            blocks,
-            pages: [],
-            error:
-              "Não foi possível organizar o diagnóstico: " +
-              (error as Error).message,
-          });
+          setLayout({ blocks, pages: [], error: (e as Error).message });
       }
     }
     void paginate();
     return () => {
       cancelled = true;
     };
-  }, [blocks]);
-  const renderBlock = (index: number) => (
+  }, [blocks, imageKey, imageState]);
+  const renderBlock = (i: number) => (
     <div
       className="diag-flow-block"
-      data-diag-block={blocks[index].key}
-      key={blocks[index].key}
+      data-diag-block={blocks[i].key}
+      key={blocks[i].key}
     >
-      {blocks[index].node}
+      {blocks[i].node}
     </div>
   );
   return (
     <>
       {!ready && <p role="status">Organizando as páginas do diagnóstico…</p>}
-      {ready && layout.error && <p role="alert">{layout.error}</p>}
+      {ready && layout?.error && <p role="alert">{layout.error}</p>}
       <div
-        className="report-document diag-compact-document"
+        className="report-document diag-compact-document diag-v2"
         id="diagnostic-document"
         data-diagnostic-layout={
-          ready ? (layout.error ? "error" : "ready") : "pending"
+          ready ? (layout?.error ? "error" : "ready") : "pending"
         }
-        data-layout-error={ready ? layout.error : undefined}
+        data-layout-error={layout?.error}
       >
         {ready &&
-          layout.pages.map((indices, i) => (
+          layout?.pages.map((page, i) => (
             <EditorialPage key={i} {...shared} page={i + 1}>
               <div className="diag-flow-running">
-                {i === 0
-                  ? "Análise inicial e direcionamento"
-                  : blocks[indices[0]].label}
+                {blocks[page[0]].label} · {i + 1}/{layout.pages.length}
               </div>
               <div className="diag-sheet diag-flow">
-                {indices.map(renderBlock)}
+                {page.map(renderBlock)}
               </div>
             </EditorialPage>
           ))}
       </div>
       <div
         ref={measure}
-        className="report-document diag-compact-document diag-measure"
+        className="report-document diag-compact-document diag-v2 diag-measure"
         aria-hidden="true"
         style={{
           position: "fixed",
@@ -361,9 +580,7 @@ export default function DiagnosticDocument({ d }: { d: Diagnostic }) {
         }}
       >
         <EditorialPage {...shared} page={1}>
-          <div className="diag-flow-running">
-            Análise inicial e direcionamento
-          </div>
+          <div className="diag-flow-running">Medição</div>
           <div className="diag-sheet diag-flow">
             {blocks.map((_, i) => renderBlock(i))}
           </div>
