@@ -9,7 +9,7 @@ import {
 } from "@/lib/diagnostic";
 import {
   guidanceForProblem,
-  monitoringForSection,
+  monitoringForOption,
 } from "@/lib/diagnostic-guidance";
 import {
   diagnosticParagraphs,
@@ -26,7 +26,18 @@ type Block = {
   node: ReactNode;
 };
 function diagnosticBlocks(d: Diagnostic): Block[] {
-  const sections = activeSections(d);
+  const sections = activeSections(d).map((s) => ({
+    ...s,
+    checks: s.points.map((p) => p.title),
+    notes: s.points
+      .map((p) => p.evidence)
+      .filter(Boolean)
+      .join("\n"),
+    recommendation: s.points
+      .map((p) => p.action)
+      .filter(Boolean)
+      .join("\n"),
+  }));
   const blocks: Block[] = [];
   const add = (key: string, label: string, node: ReactNode, keepNext = false) =>
     blocks.push({ key, label, node, keepNext });
@@ -138,7 +149,10 @@ function diagnosticBlocks(d: Diagnostic): Block[] {
           </div>
           <div>
             <small>Encaminhamento sugerido</small>
-            <p>{guidanceForProblem(s.id, check)}</p>
+            <p>
+              {s.points[i]?.action ||
+                guidanceForProblem(s.points[i]?.optionId || "")}
+            </p>
           </div>
         </div>,
       ),
@@ -159,9 +173,11 @@ function diagnosticBlocks(d: Diagnostic): Block[] {
         <div className="diag-flow-monitor">
           <b>Como acompanhar</b>
           <p>
-            {monitoringForSection(s.id)} Registrar a data da alteração e
-            comparar com a situação anterior, sem mudar várias condições ao
-            mesmo tempo.
+            {s.points
+              .map((p) => p.kpi || monitoringForOption(p.optionId || ""))
+              .join("; ")}{" "}
+            Registrar a data da alteração e comparar com a situação anterior,
+            sem mudar várias condições ao mesmo tempo.
           </p>
         </div>,
       );

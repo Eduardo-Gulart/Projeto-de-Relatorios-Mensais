@@ -1,16 +1,26 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 import { useEffect, useState } from "react";
 import {
   Diagnostic,
+  DiagnosticSection,
+  DiagnosticPoint,
   SavedDiagnostic,
   newDiagnostic,
-  diagnosticSections,
   diagnosticStatus,
-  suggestedDiagnosticActions,
   diagnosticReady,
-  activeSections,
+  normalizeDiagnostic,
   toggleDiagnosticProblem,
+  newOtherPoint,
+  updateSection,
+  suggestedDiagnosticActions,
+  actionForPoint,
 } from "@/lib/diagnostic";
+import {
+  diagnosticCatalog,
+  optionById,
+  rangeDefaults,
+} from "@/lib/diagnostic-catalog";
 import DiagnosticDocument from "./document";
 import { downloadReport } from "@/lib/download";
 import "./diagnostics.css";
@@ -27,10 +37,17 @@ export default function DiagnosticPanel() {
     setDirty(true);
   }
   async function load() {
-    const r = await fetch("/api/diagnostics", { cache: "no-store" });
-    const v = (await r.json()) as SavedDiagnostic[] & { error?: string };
-    if (!r.ok) throw new Error(v.error);
-    setRows(v);
+    const response = await fetch("/api/diagnostics", { cache: "no-store" });
+    const result = (await response.json()) as SavedDiagnostic[] & {
+      error?: string;
+    };
+    if (!response.ok) throw Error(result.error);
+    setRows(
+      result.map((item: SavedDiagnostic) => ({
+        ...normalizeDiagnostic(item),
+        updated: item.updated,
+      })),
+    );
   }
   useEffect(() => {
     void load().catch((e) => setMessage(e.message));
@@ -45,9 +62,37 @@ export default function DiagnosticPanel() {
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
+  function editArea(id: string, patch: Partial<DiagnosticSection>) {
+    const before = d.sections.find((s) => s.id === id)!;
+    const after = updateSection(before, patch);
+    const sections = d.sections.map((s) => (s.id === id ? after : s));
+    const actions = d.actions.filter(
+      (a) =>
+        a.areaId !== id ||
+        !a.pointId ||
+        after.points.some((p) => p.id === a.pointId),
+    );
+    for (const point of after.points)
+      if (!before.points.some((p) => p.id === point.id))
+        actions.push(actionForPoint(after, point, d.manager));
+    change({ sections, actions });
+  }
+  function editPoint(
+    areaId: string,
+    id: string,
+    patch: Partial<DiagnosticPoint>,
+  ) {
+    const area = d.sections.find((s) => s.id === areaId)!;
+    editArea(areaId, {
+      points: area.points.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+    });
+  }
+  function toggle(area: DiagnosticSection, id: string, checked: boolean) {
+    const next = toggleDiagnosticProblem(area, id, checked);
+    editArea(area.id, next);
+  }
   async function save(copy = false) {
     setBusy(true);
-    setMessage("");
     try {
       const item = copy ? { ...d, id: crypto.randomUUID() } : d;
       const r = await fetch("/api/diagnostics", {
@@ -58,8 +103,12 @@ export default function DiagnosticPanel() {
         },
         body: JSON.stringify(item),
       });
-      const result = (await r.json()) as { updated: string; error?: string };
-      if (!r.ok) throw new Error(result.error);
+      const result = (await r.json()) as {
+        error?: string;
+        updated: string;
+        url: string;
+      };
+      if (!r.ok) throw Error(result.error);
       setD(item);
       setVersion(result.updated);
       setDirty(false);
@@ -71,40 +120,9 @@ export default function DiagnosticPanel() {
       setBusy(false);
     }
   }
-  async function upload(index: number, file: File) {
-    setBusy(true);
-    try {
-      const form = new FormData();
-      form.set("file", file);
-      const r = await fetch("/api/diagnostic-uploads", {
-          method: "POST",
-          body: form,
-        }),
-        data = (await r.json()) as { url: string; error?: string };
-      if (!r.ok) throw new Error(data.error);
-      change({
-        sections: d.sections.map((s, i) =>
-          i === index
-            ? { ...s, images: [...s.images, { url: data.url, caption: "" }] }
-            : s,
-        ),
-      });
-      setMessage(
-        "Print anexado. Salve o diagnóstico para guardar a alteração.",
-      );
-    } catch (e) {
-      setMessage((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
   function open(item?: SavedDiagnostic) {
-    if (
-      dirty &&
-      !window.confirm("Descartar as alterações não salvas deste diagnóstico?")
-    )
-      return;
-    setD(item || newDiagnostic());
+    if (dirty && !window.confirm("Descartar as alterações não salvas?")) return;
+    setD(item ? normalizeDiagnostic(item) : newDiagnostic());
     setVersion(item?.updated || "");
     setDirty(false);
     setPreview(false);
@@ -115,18 +133,52 @@ export default function DiagnosticPanel() {
     setBusy(true);
     try {
       const r = await fetch("/api/diagnostics?id=" + item.id, {
-          method: "DELETE",
-          headers: { "X-Diagnostic-Version": item.updated },
-        }),
-        v = (await r.json()) as { error?: string };
-      if (!r.ok) throw new Error(v.error);
-      if (d.id === item.id) {
+        method: "DELETE",
+        headers: { "X-Diagnostic-Version": item.updated },
+      });
+      if (!r.ok) throw Error(((await r.json()) as { error?: string }).error);
+      if (item.id === d.id) {
         setD(newDiagnostic());
         setVersion("");
         setDirty(false);
       }
       await load();
       setMessage("Diagnóstico excluído.");
+    } catch (e) {
+      setMessage((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function upload(areaId: string, file: File) {
+    setBusy(true);
+    try {
+      const form = new FormData();
+      form.set("file", file);
+      const r = await fetch("/api/diagnostic-uploads", {
+        method: "POST",
+        body: form,
+      });
+      const result = (await r.json()) as {
+        error?: string;
+        updated: string;
+        url: string;
+      };
+      if (!r.ok) throw Error(result.error);
+      const area = d.sections.find((s) => s.id === areaId)!;
+      editArea(areaId, {
+        images: [
+          ...area.images,
+          {
+            url: result.url,
+            caption: "",
+            pointIds: area.points.map((p) => p.id),
+          },
+        ],
+      });
+      setMessage(
+        "Print anexado. Salve o diagnóstico para guardar a alteração.",
+      );
     } catch (e) {
       setMessage((e as Error).message);
     } finally {
@@ -152,29 +204,113 @@ export default function DiagnosticPanel() {
       setBusy(false);
     }
   }
+  function quickFields(area: DiagnosticSection, point: DiagnosticPoint) {
+    const option = optionById.get(point.optionId || "");
+    const kind = option?.quickValue;
+    const config = kind ? rangeDefaults[kind] : null;
+    const ranges = kind ? d.rangePresets[kind] || config!.ranges : [];
+    return (
+      <div className="diag-quick-fields">
+        <label>
+          Valor observado {point.unit && `(${point.unit})`}
+          <input
+            aria-label={"Valor observado: " + point.title}
+            type="number"
+            step="any"
+            value={
+              point.observed !== "" && Number.isFinite(Number(point.observed))
+                ? point.observed
+                : ""
+            }
+            placeholder="Opcional"
+            onChange={(e) =>
+              editPoint(area.id, point.id, { observed: e.target.value })
+            }
+          />
+        </label>
+        {!config && (
+          <label>
+            Unidade
+            <select
+              value={point.unit}
+              onChange={(e) =>
+                editPoint(area.id, point.id, { unit: e.target.value })
+              }
+            >
+              {["", "%", "R$", "min", "nota", "un.", "vezes"].map((u) => (
+                <option key={u} value={u}>
+                  {u || "Não se aplica"}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {ranges.length > 0 && (
+          <div
+            className="diag-range-buttons"
+            aria-label={"Faixas de " + point.title}
+          >
+            {ranges.map((range) => (
+              <button
+                type="button"
+                className={
+                  "secondary " + (point.observed === range ? "selected" : "")
+                }
+                aria-pressed={point.observed === range}
+                key={range}
+                onClick={() =>
+                  editPoint(area.id, point.id, {
+                    observed: point.observed === range ? "" : range,
+                  })
+                }
+              >
+                {range}
+              </button>
+            ))}
+          </div>
+        )}
+        <label>
+          Meta para revisão {point.unit && `(${point.unit})`}
+          <input
+            type="number"
+            step="any"
+            value={
+              point.target !== "" && Number.isFinite(Number(point.target))
+                ? point.target
+                : ""
+            }
+            placeholder="A definir"
+            onChange={(e) =>
+              editPoint(area.id, point.id, { target: e.target.value })
+            }
+          />
+        </label>
+        <small>
+          KPI: {point.kpi || "A definir"}. Linha de base:{" "}
+          {point.baseline || point.observed || "Não informada"}.
+        </small>
+      </div>
+    );
+  }
   return (
     <div className="diagnostic-workspace">
       <div className="diag-toolbar">
         <div>
           <h2>Diagnósticos de entrada</h2>
-          <p>
-            Avalie a loja antes de iniciar a gestão. Cada integrante acessa os
-            diagnósticos que criou.
-          </p>
+          <p>Marque os pontos, anexe as evidências e gere o diagnóstico.</p>
         </div>
         <button className="secondary" disabled={busy} onClick={() => open()}>
           Novo diagnóstico
         </button>
       </div>
       {message && (
-        <div className="notice" role="status">
+        <p role="status" className="notice">
           {message}
-        </div>
+        </p>
       )}
       <div className="diag-work-grid">
         <aside className="panel diag-history">
           <h3>Meus diagnósticos</h3>
-          {!rows.length && <p>Nenhum diagnóstico salvo ainda.</p>}
           {rows.map((item) => (
             <div
               className={
@@ -183,91 +319,76 @@ export default function DiagnosticPanel() {
               key={item.id}
             >
               <button
-                disabled={busy}
                 className="secondary"
+                disabled={busy}
                 onClick={() => open(item)}
               >
                 {item.store}
-                <small>
-                  {item.date.split("-").reverse().join("/")} ·{" "}
-                  {item.reviewed ? "Conferido" : "Rascunho"}
-                </small>
+                <small>{item.date.split("-").reverse().join("/")}</small>
               </button>
               <button
+                className="text-button"
                 disabled={busy}
-                className="secondary"
-                aria-label={"Excluir diagnóstico de " + item.store}
-                onClick={() => void remove(item)}
+                onClick={() => remove(item)}
               >
                 Excluir
               </button>
             </div>
           ))}
+          {!rows.length && <p>Nenhum diagnóstico salvo.</p>}
         </aside>
         <div>
           <div className="panel diag-controls">
             <div className="diag-button-row">
               <button
-                disabled={busy}
                 className={!preview ? "" : "secondary"}
+                disabled={busy}
                 onClick={() => setPreview(false)}
               >
                 Preencher diagnóstico
               </button>
               <button
-                disabled={busy}
                 className={preview ? "" : "secondary"}
+                disabled={busy}
                 onClick={() => setPreview(true)}
               >
                 Prévia do diagnóstico
               </button>
-              <span>
-                {dirty
-                  ? "Alterações não salvas"
-                  : version
-                    ? "Salvo"
-                    : "Novo rascunho"}
-              </span>
-            </div>
-            <div className="diag-button-row">
-              <button
-                disabled={busy || !d.store.trim()}
-                onClick={() => void save()}
-              >
+              <button disabled={busy || !d.store.trim()} onClick={() => save()}>
                 Salvar diagnóstico
               </button>
               <button
-                disabled={busy || !d.store.trim()}
                 className="secondary"
-                onClick={() => void save(true)}
+                disabled={busy || !d.store.trim()}
+                onClick={() => save(true)}
               >
-                Salvar como cópia
+                Salvar cópia
               </button>
               {preview && (
-                <button
-                  disabled={busy || !diagnosticReady(d)}
-                  onClick={() => void pdf()}
-                >
-                  {busy ? "Aguarde…" : "Gerar PDF do diagnóstico"}
+                <button disabled={busy || !diagnosticReady(d)} onClick={pdf}>
+                  Gerar PDF do diagnóstico
                 </button>
               )}
             </div>
+            <small>
+              {dirty ? "Há alterações não salvas." : "Diagnóstico atualizado."}
+            </small>
           </div>
           {preview ? (
-            <>
-              <p className="diag-preview-help">
-                Confira os textos e os prints antes de compartilhar. Para
-                liberar o PDF, preencha loja e responsável, avalie uma área e
-                marque a conferência no formulário.
-              </p>
-              <div className="diag-preview-scroll">
-                <DiagnosticDocument d={d} />
-              </div>
-            </>
+            <div className="diag-preview-scroll">
+              <DiagnosticDocument d={d} />
+            </div>
           ) : (
             <fieldset disabled={busy}>
+              {d.migration?.needsReview && (
+                <p className="notice">
+                  Diagnóstico anterior convertido sem apagar informações.
+                  Confira os pontos importados e o plano antes de gerar o novo
+                  PDF.
+                </p>
+              )}
               <section className="panel">
-                <h3>Identificação da loja</h3>
+                <h3>Ficha da loja</h3>
                 <div className="diag-form-grid">
                   <label>
                     Nome da loja *
@@ -286,7 +407,7 @@ export default function DiagnosticPanel() {
                     />
                   </label>
                   <label>
-                    Data do diagnóstico
+                    Data
                     <input
                       type="date"
                       value={d.date}
@@ -296,347 +417,405 @@ export default function DiagnosticPanel() {
                   <label>
                     Período analisado
                     <input
-                      placeholder="Ex.: agosto e setembro de 2026"
                       value={d.period}
                       maxLength={100}
                       onChange={(e) => change({ period: e.target.value })}
                     />
                   </label>
                 </div>
-                <details className="diag-optional">
-                  <summary>Adicionar resumo geral (opcional)</summary>
-                  <label>
-                    Visão executiva
-                    <textarea
-                      maxLength={700}
-                      rows={4}
-                      placeholder="Resuma a situação da loja e a principal prioridade para o início da gestão."
-                      value={d.summary}
-                      onChange={(e) => change({ summary: e.target.value })}
-                    />
-                    <small>{d.summary.length}/700</small>
-                  </label>
-                </details>
-              </section>
-              <section className="panel">
-                <h3>Marque os problemas que encontrou</h3>
-                <p>
-                  Siga a ordem do diagnóstico: escolha os problemas, anexe o
-                  print da área e avance. Os itens marcados aparecem no PDF
-                  abaixo do print. Você só escreve se quiser acrescentar algo.
-                </p>
-                <div className="diag-selection-summary" role="status">
-                  {d.sections.reduce((n, s) => n + s.checks.length, 0)}{" "}
-                  problemas marcados ·{" "}
-                  {d.sections.filter((s) => s.status !== "pending").length} de
-                  10 áreas avaliadas
-                </div>
-                {d.sections.map((s, index) => {
-                  const def = diagnosticSections.find((t) => t.id === s.id)!;
-                  const update = (p: Partial<typeof s>) =>
-                    change({
-                      sections: d.sections.map((v, i) =>
-                        i === index ? { ...v, ...p } : v,
-                      ),
-                    });
-                  return (
-                    <section
-                      className="diag-section-editor"
-                      key={s.id}
-                      aria-label={def.title}
-                    >
-                      <div className="diag-area-title">
-                        <span className="diag-area-number">
-                          {String(index + 1).padStart(2, "0")}
-                        </span>
-                        <div>
-                          <h4>{def.title}</h4>
-                          <p>{def.hint}</p>
-                        </div>
-                        <span className={"diag-state diag-state-" + s.status}>
-                          {s.checks.length
-                            ? `${s.checks.length} problema(s)`
-                            : diagnosticStatus[s.status]}
-                        </span>
-                      </div>
-                      <div className="diag-checks diag-problem-grid">
-                        {[...new Set([...def.checks, ...s.checks])].map(
-                          (text) => (
-                            <label
-                              key={text}
-                              className={
-                                s.checks.includes(text) ? "is-checked" : ""
-                              }
-                            >
-                              <input
-                                type="checkbox"
-                                checked={s.checks.includes(text)}
-                                onChange={(e) =>
-                                  update(
-                                    toggleDiagnosticProblem(
-                                      s,
-                                      text,
-                                      e.target.checked,
-                                    ),
-                                  )
-                                }
-                              />
-                              <span>{text}</span>
-                            </label>
-                          ),
-                        )}
-                      </div>
-                      <div className="diag-area-options">
-                        <label>
+                <details>
+                  <summary>Faixas de referência da gestão</summary>
+                  <p>
+                    São padrões editáveis deste diagnóstico, não limites
+                    oficiais do iFood. Selecionar uma faixa não muda
+                    automaticamente a severidade do catálogo.
+                  </p>
+                  {Object.entries(rangeDefaults).map(([kind, config]) => (
+                    <div className="diag-range-settings" key={kind}>
+                      <b>
+                        {config.label} ({config.unit})
+                      </b>
+                      {(d.rangePresets[kind] || config.ranges).map(
+                        (range, i) => (
                           <input
-                            type="checkbox"
-                            disabled={s.checks.length > 0}
-                            checked={s.status === "good"}
+                            aria-label={config.label + " - faixa " + (i + 1)}
+                            key={i}
+                            value={range}
+                            maxLength={100}
                             onChange={(e) =>
-                              update({
-                                status: e.target.checked ? "good" : "pending",
+                              change({
+                                rangePresets: {
+                                  ...d.rangePresets,
+                                  [kind]: (
+                                    d.rangePresets[kind] || config.ranges
+                                  ).map((r, j) =>
+                                    j === i ? e.target.value : r,
+                                  ),
+                                },
                               })
                             }
                           />
-                          Conferi e não encontrei problemas nesta área
-                        </label>
-                        {s.checks.length > 0 && (
-                          <label>
-                            <input
-                              type="checkbox"
-                              checked={s.status === "critical"}
-                              onChange={(e) =>
-                                update({
-                                  status: e.target.checked
-                                    ? "critical"
-                                    : "attention",
-                                })
-                              }
-                            />
-                            Tratar como prioridade alta
-                          </label>
-                        )}
+                        ),
+                      )}
+                    </div>
+                  ))}
+                </details>
+              </section>
+              <div className="diag-selection-summary">
+                {d.sections.filter((s) => s.status !== "pending").length} de{" "}
+                {diagnosticCatalog.length} áreas avaliadas ·{" "}
+                {d.sections.reduce((n, s) => n + s.points.length, 0)} pontos
+                marcados
+              </div>
+              {diagnosticCatalog.map((area, index) => {
+                const s = d.sections.find((s) => s.id === area.id)!;
+                return (
+                  <section
+                    className="panel diag-area-panel"
+                    role="region"
+                    aria-label={area.title}
+                    key={area.id}
+                  >
+                    <div className="diag-area-title">
+                      <span className="diag-area-number">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <div>
+                        <h3>{area.title}</h3>
+                        <small>
+                          O status é calculado pelas opções marcadas.
+                        </small>
                       </div>
-                      <details className="diag-optional">
-                        <summary>
-                          Outro problema ou observação (opcional)
-                          {s.notes ? " · preenchido" : ""}
-                        </summary>
-                        <label>
-                          Detalhes adicionais
-                          <textarea
-                            maxLength={900}
-                            rows={3}
-                            value={s.notes}
-                            placeholder="Descreva somente o que não está nas opções acima."
-                            onChange={(e) => update({ notes: e.target.value })}
-                          />
-                          <small>{s.notes.length}/900</small>
-                        </label>
-                      </details>
-                      <details className="diag-optional">
-                        <summary>
-                          Recomendação para esta área (opcional)
-                          {s.recommendation ? " · preenchida" : ""}
-                        </summary>
-                        <label>
-                          O que fazer
-                          <textarea
-                            maxLength={600}
-                            rows={3}
-                            value={s.recommendation}
-                            onChange={(e) =>
-                              update({ recommendation: e.target.value })
+                      <span className={"diag-state diag-state-" + s.status}>
+                        {diagnosticStatus[s.status]}
+                      </span>
+                    </div>
+                    <button
+                      className="secondary"
+                      aria-pressed={s.checked}
+                      disabled={s.points.length > 0}
+                      title={
+                        s.points.length
+                          ? "Desmarque os pontos antes de declarar a área adequada."
+                          : ""
+                      }
+                      onClick={() => editArea(s.id, { checked: !s.checked })}
+                    >
+                      {s.checked
+                        ? "✓ Conferi, sem problemas"
+                        : "Conferi, sem problemas"}
+                    </button>
+                    <div className="diag-checks diag-problem-grid">
+                      {area.options.map((option) => {
+                        const point = s.points.find(
+                          (p) => p.optionId === option.id,
+                        );
+                        return (
+                          <div
+                            className={
+                              "diag-option " + (point ? "is-checked" : "")
                             }
-                          />
-                        </label>
-                        <button
-                          className="secondary"
-                          disabled={!!s.recommendation}
-                          onClick={() => update({ recommendation: def.action })}
-                        >
-                          Inserir sugestão de ação
-                        </button>
-                      </details>
-                      <div className="diag-upload">
-                        <label>
-                          Anexar print (PNG/JPG, até 10 MB, máximo 3 por área)
-                          <input
-                            type="file"
-                            accept="image/png,image/jpeg"
-                            disabled={s.images.length >= 3}
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) void upload(index, file);
-                              e.target.value = "";
-                            }}
-                          />
-                        </label>
-                        {s.images.map((img, i) => (
-                          <div className="diag-image-editor" key={img.url}>
-                            <img src={img.url} alt="Print anexado" />
+                            key={option.id}
+                          >
                             <label>
-                              Legenda
                               <input
-                                maxLength={160}
-                                value={img.caption}
+                                type="checkbox"
+                                checked={!!point}
                                 onChange={(e) =>
-                                  update({
-                                    images: s.images.map((v, j) =>
-                                      j === i
-                                        ? { ...v, caption: e.target.value }
-                                        : v,
-                                    ),
+                                  toggle(s, option.id, e.target.checked)
+                                }
+                              />
+                              <span>{option.text}</span>
+                              <small
+                                className={
+                                  "diag-severity sev-" + option.severity
+                                }
+                              >
+                                {option.severity === "A"
+                                  ? "Alta"
+                                  : option.severity === "M"
+                                    ? "Média"
+                                    : "Baixa"}
+                              </small>
+                            </label>
+                            {point && quickFields(s, point)}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <details
+                      className="diag-optional"
+                      open={s.points.some((p) => !p.optionId)}
+                    >
+                      <summary>
+                        Outro (opcional)
+                        {s.points.some((p) => !p.optionId)
+                          ? " · contém registros"
+                          : ""}
+                      </summary>
+                      {s.points
+                        .filter((p) => !p.optionId)
+                        .map((p) => (
+                          <div className="diag-other" key={p.id}>
+                            <label>
+                              Título do ponto
+                              <input
+                                maxLength={180}
+                                value={p.title}
+                                onChange={(e) =>
+                                  editPoint(s.id, p.id, {
+                                    title: e.target.value,
                                   })
                                 }
                               />
                             </label>
+                            <label>
+                              Evidência
+                              <textarea
+                                value={p.evidence}
+                                maxLength={2500}
+                                onChange={(e) =>
+                                  editPoint(s.id, p.id, {
+                                    evidence: e.target.value,
+                                  })
+                                }
+                              />
+                            </label>
+                            <label>
+                              Encaminhamento
+                              <textarea
+                                value={p.action}
+                                maxLength={2500}
+                                onChange={(e) =>
+                                  editPoint(s.id, p.id, {
+                                    action: e.target.value,
+                                  })
+                                }
+                              />
+                            </label>
+                            <div className="diag-form-grid">
+                              <label>
+                                Prioridade
+                                <select
+                                  value={p.severity}
+                                  onChange={(e) =>
+                                    editPoint(s.id, p.id, {
+                                      severity: e.target.value as
+                                        "A" | "M" | "B",
+                                    })
+                                  }
+                                >
+                                  <option value="A">Alta · 7 dias</option>
+                                  <option value="M">Média · 30 dias</option>
+                                  <option value="B">Baixa · 60 dias</option>
+                                </select>
+                              </label>
+                              <label>
+                                KPI
+                                <input
+                                  value={p.kpi}
+                                  maxLength={250}
+                                  onChange={(e) =>
+                                    editPoint(s.id, p.id, {
+                                      kpi: e.target.value,
+                                    })
+                                  }
+                                />
+                              </label>
+                            </div>
+                            {quickFields(s, p)}
                             <button
-                              className="secondary"
+                              className="text-button"
                               onClick={() =>
-                                update({
-                                  images: s.images.filter((_, j) => j !== i),
+                                editArea(s.id, {
+                                  points: s.points.filter(
+                                    (point) => point.id !== p.id,
+                                  ),
                                 })
                               }
                             >
-                              Remover print
+                              Remover este ponto
                             </button>
                           </div>
                         ))}
-                      </div>
-                    </section>
-                  );
-                })}
-              </section>
-              <section className="panel">
-                <div className="diag-toolbar">
-                  <div>
-                    <h3>Plano de ação inicial</h3>
-                    <p>Defina prioridades, responsáveis e prazos.</p>
-                  </div>
-                  <button
-                    className="secondary"
-                    disabled={!!d.actions.length}
-                    onClick={() =>
-                      change({ actions: suggestedDiagnosticActions(d) })
-                    }
-                  >
-                    Montar plano com os problemas marcados
-                  </button>
-                </div>
-                {d.actions.map((a, i) => {
-                  const update = (p: Partial<typeof a>) =>
-                    change({
-                      actions: d.actions.map((v, j) =>
-                        i === j ? { ...v, ...p } : v,
-                      ),
-                    });
-                  return (
-                    <div className="diag-action-editor" key={i}>
-                      <label>
-                        Ação {i + 1}
-                        <input
-                          maxLength={140}
-                          value={a.title}
-                          onChange={(e) => update({ title: e.target.value })}
-                        />
-                      </label>
-                      <label>
-                        O que fazer
-                        <textarea
-                          maxLength={500}
-                          rows={3}
-                          value={a.description}
-                          onChange={(e) =>
-                            update({ description: e.target.value })
-                          }
-                        />
-                      </label>
-                      <div className="diag-form-grid">
-                        <label>
-                          Prioridade
-                          <select
-                            value={a.priority}
-                            onChange={(e) =>
-                              update({
-                                priority: e.target.value as typeof a.priority,
-                              })
-                            }
-                          >
-                            <option value="high">Alta</option>
-                            <option value="medium">Média</option>
-                            <option value="low">Baixa</option>
-                          </select>
-                        </label>
-                        <label>
-                          Responsável
-                          <input
-                            maxLength={100}
-                            value={a.owner}
-                            onChange={(e) => update({ owner: e.target.value })}
-                          />
-                        </label>
-                        <label>
-                          Prazo
-                          <input
-                            maxLength={60}
-                            value={a.deadline}
-                            onChange={(e) =>
-                              update({ deadline: e.target.value })
-                            }
-                          />
-                        </label>
-                      </div>
                       <button
                         className="secondary"
                         onClick={() =>
-                          change({
-                            actions: d.actions.filter((_, j) => j !== i),
+                          editArea(s.id, {
+                            points: [...s.points, newOtherPoint()],
                           })
                         }
                       >
-                        Remover ação
+                        Adicionar outro ponto
                       </button>
+                    </details>
+                    <div className="diag-upload">
+                      <label>
+                        Anexar print da área
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg"
+                          disabled={s.images.length >= 6}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) void upload(s.id, file);
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
+                      <small>
+                        Até 6 prints. Cada print fica vinculado aos pontos
+                        marcados nesta área.
+                      </small>
+                      {s.images.map((image, i) => (
+                        <div className="diag-image-editor" key={image.url}>
+                          <a href={image.url} target="_blank" rel="noreferrer">
+                            <img
+                              src={image.url}
+                              alt={"Print " + (i + 1) + " de " + area.title}
+                            />
+                          </a>
+                          <span>
+                            Print {i + 1} · {image.pointIds.length} pontos
+                            vinculados
+                          </span>
+                          <button
+                            className="secondary"
+                            onClick={() =>
+                              editArea(s.id, {
+                                images: s.images.filter((_, j) => j !== i),
+                              })
+                            }
+                          >
+                            Remover print
+                          </button>
+                        </div>
+                      ))}
                     </div>
-                  );
-                })}
+                  </section>
+                );
+              })}
+              <section className="panel">
+                <h3>Plano de execução</h3>
+                <p>
+                  As novas marcações geram ações automaticamente. Ajuste apenas
+                  quando necessário.
+                </p>
                 <button
                   className="secondary"
-                  disabled={d.actions.length >= 20}
-                  onClick={() =>
+                  onClick={() => {
+                    const generated = suggestedDiagnosticActions(d);
                     change({
                       actions: [
                         ...d.actions,
-                        {
-                          title: "",
-                          description: "",
-                          priority: "medium",
-                          owner: d.manager,
-                          deadline: "Primeiros 30 dias",
-                        },
+                        ...generated.filter(
+                          (a) =>
+                            !d.actions.some(
+                              (old) =>
+                                old.pointId === a.pointId &&
+                                old.areaId === a.areaId,
+                            ),
+                        ),
                       ],
-                    })
-                  }
+                    });
+                  }}
                 >
-                  Adicionar ação
+                  Completar ações faltantes
                 </button>
+                {d.actions.map((a, i) => (
+                  <details className="diag-action-editor" key={a.id}>
+                    <summary>
+                      {a.days} dias · {a.title}
+                    </summary>
+                    <label>
+                      Ação
+                      <textarea
+                        value={a.description}
+                        maxLength={2500}
+                        onChange={(e) =>
+                          change({
+                            actions: d.actions.map((x, j) =>
+                              j === i
+                                ? { ...x, description: e.target.value }
+                                : x,
+                            ),
+                          })
+                        }
+                      />
+                    </label>
+                    <div className="diag-form-grid">
+                      <label>
+                        Responsável
+                        <input
+                          maxLength={100}
+                          value={a.owner}
+                          onChange={(e) =>
+                            change({
+                              actions: d.actions.map((x, j) =>
+                                j === i ? { ...x, owner: e.target.value } : x,
+                              ),
+                            })
+                          }
+                        />
+                      </label>
+                      <label>
+                        Prazo
+                        <select
+                          value={a.days}
+                          onChange={(e) =>
+                            change({
+                              actions: d.actions.map((x, j) =>
+                                j === i
+                                  ? {
+                                      ...x,
+                                      days: Number(e.target.value) as
+                                        7 | 30 | 60,
+                                      deadline: e.target.value + " dias",
+                                    }
+                                  : x,
+                              ),
+                            })
+                          }
+                        >
+                          <option value={7}>7 dias</option>
+                          <option value={30}>30 dias</option>
+                          <option value={60}>60 dias</option>
+                        </select>
+                      </label>
+                    </div>
+                    <button
+                      className="text-button"
+                      onClick={() =>
+                        change({ actions: d.actions.filter((_, j) => j !== i) })
+                      }
+                    >
+                      Remover ação
+                    </button>
+                  </details>
+                ))}
               </section>
               <section className="panel">
                 <label className="diag-review">
                   <input
                     type="checkbox"
                     checked={d.reviewed}
-                    onChange={(e) => change({ reviewed: e.target.checked })}
+                    onChange={(e) =>
+                      change({
+                        reviewed: e.target.checked,
+                        migration: d.migration
+                          ? { ...d.migration, needsReview: !e.target.checked }
+                          : undefined,
+                      })
+                    }
                   />
                   Conferi as informações, os prints e as recomendações deste
                   diagnóstico.
                 </label>
-                <p>
-                  {activeSections(d).length} de 10 áreas incluídas. Alterações
-                  posteriores exigem nova conferência.
-                </p>
-                <button onClick={() => setPreview(true)}>
-                  Visualizar diagnóstico
+                <button
+                  disabled={!diagnosticReady(d)}
+                  onClick={() => setPreview(true)}
+                >
+                  Conferir PDF
                 </button>
               </section>
             </fieldset>

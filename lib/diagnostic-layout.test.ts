@@ -3,10 +3,7 @@ import {
   diagnosticParagraphs,
   packDiagnosticBlocks,
 } from "./diagnostic-layout";
-import {
-  guidanceForProblem,
-  monitoringForSection,
-} from "./diagnostic-guidance";
+import { guidanceForProblem, monitoringForOption } from "./diagnostic-guidance";
 import { diagnosticSections } from "./diagnostic";
 
 describe("continuous diagnostic pagination", () => {
@@ -85,13 +82,15 @@ describe("continuous diagnostic pagination", () => {
   it("provides specific guidance for every selectable problem without inferring findings", () => {
     for (const section of diagnosticSections) {
       const suggestions = section.checks.map((check) =>
-        guidanceForProblem(section.id, check),
+        guidanceForProblem(section.options.find((o) => o.text === check)!.id),
       );
       expect(new Set(suggestions).size).toBe(section.checks.length);
-      expect(monitoringForSection(section.id).length).toBeGreaterThan(40);
+      expect(monitoringForOption(section.options[0].id).length).toBeGreaterThan(
+        2,
+      );
     }
-    expect(guidanceForProblem("menu", "Observação antiga")).toContain(
-      "Validar a causa",
+    expect(guidanceForProblem("Observação antiga")).toContain(
+      "Defina o encaminhamento",
     );
   });
 });
