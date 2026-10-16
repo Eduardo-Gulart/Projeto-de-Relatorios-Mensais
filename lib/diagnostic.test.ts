@@ -7,7 +7,12 @@ import {
   suggestedDiagnosticActions,
   toggleDiagnosticProblem,
   normalizeDiagnostic,
+  newOtherPoint,
+  updateSection,
 } from "./diagnostic";
+import { diagnosticSections as legacySections } from "./diagnostic-legacy-sections";
+import { diagnosticCatalog, textToOptionId } from "./diagnostic-catalog";
+import { guidanceForProblem as legacyGuidance } from "./diagnostic-legacy-guidance";
 import { DatabaseSync } from "node:sqlite";
 const state = vi.hoisted(() => ({
   owner: "alice",
@@ -190,16 +195,14 @@ it("normaliza os dez registros antigos, preservando textos, ações e prints", (
     ...d,
     schemaVersion: undefined,
     summary: "Síntese antiga",
-    sections: d.sections
-      .slice(0, 10)
-      .map((s) => ({
-        id: s.id,
-        status: "pending",
-        checks: [],
-        notes: "",
-        recommendation: "",
-        images: [],
-      })),
+    sections: d.sections.slice(0, 10).map((s) => ({
+      id: s.id,
+      status: "pending",
+      checks: [],
+      notes: "",
+      recommendation: "",
+      images: [],
+    })),
     actions: [
       {
         title: "Ação antiga",
@@ -237,4 +240,83 @@ it("normaliza os dez registros antigos, preservando textos, ações e prints", (
   expect(v.sections[0].images[0].caption).toBe("Print anterior");
   expect(v.reviewed).toBe(false);
   expect(normalizeDiagnostic(v)).toEqual(v);
+});
+
+it("preserva o texto e encaminhamento das 45 opções antigas pelo id da mesma área", () => {
+  expect(legacySections.flatMap((s) => s.checks)).toHaveLength(45);
+  const old = {
+    ...draft(),
+    schemaVersion: 1,
+    sections: legacySections.map((s) => ({
+      id: s.id,
+      status: "attention",
+      checks: [...s.checks],
+      notes: "",
+      recommendation: "",
+      images: [],
+    })),
+    actions: [],
+  };
+  const migrated = normalizeDiagnostic(old);
+  for (const area of legacySections) {
+    const section = migrated.sections.find((s) => s.id === area.id)!;
+    for (const text of area.checks) {
+      const optionId = textToOptionId.get(text);
+      expect(
+        diagnosticCatalog
+          .find((a) => a.id === area.id)
+          ?.options.some((o) => o.id === optionId),
+      ).toBe(true);
+      const point = section.points.find((p) => p.optionId === optionId)!;
+      expect(point.title).toBe(text);
+      expect(point.action).toBe(legacyGuidance(area.id, text));
+    }
+  }
+  expect(normalizeDiagnostic(migrated)).toEqual(migrated);
+});
+
+it("vincula os prints existentes a um novo Outro e remove só vínculos excluídos", () => {
+  const d = draft();
+  const point = newOtherPoint();
+  const original = d.sections[0];
+  original.images = [
+    {
+      url: "/api/diagnostic-uploads?id=" + crypto.randomUUID(),
+      caption: "Print da área",
+      pointIds: [],
+    },
+  ];
+  const added = updateSection(original, { points: [point] });
+  expect(added.images[0].pointIds).toEqual([point.id]);
+  const edited = updateSection(added, {
+    points: [{ ...point, evidence: "Conferido" }],
+  });
+  expect(edited.images[0].pointIds).toEqual([point.id]);
+  expect(updateSection(edited, { points: [] }).images[0].pointIds).toEqual([]);
+});
+
+it("mantém textos antigos fora do catálogo da área como pontos personalizados", () => {
+  const old = {
+    ...draft(),
+    schemaVersion: 1,
+    sections: legacySections.map((s) => ({
+      id: s.id,
+      status: "pending",
+      checks: [] as string[],
+      notes: "",
+      recommendation: "",
+      images: [],
+    })),
+    actions: [],
+  };
+  old.sections[0].checks = ["Produtos sem foto", "Ponto livre anterior"];
+  old.sections[0].status = "attention";
+  const migrated = normalizeDiagnostic(old);
+  expect(migrated.sections[0].points.map((point) => point.title)).toEqual(
+    old.sections[0].checks,
+  );
+  expect(
+    migrated.sections[0].points.every((point) => point.optionId === undefined),
+  ).toBe(true);
+  expect(normalizeDiagnostic(migrated)).toEqual(migrated);
 });

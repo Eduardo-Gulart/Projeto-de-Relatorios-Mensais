@@ -78,6 +78,35 @@ const normalize = (s: string) =>
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
+
+/** Match proposed expansion, excluding reductions and explicitly negated verbs. */
+function expandsIncentives(description: string) {
+  const text = normalize(description);
+  const expansion =
+    /\b(?:aument(?:ar|e|ando|o)|ampli(?:ar|e|ando|acao)|(?:re)?ativ(?:ar|e|ando|acao)|cri(?:ar|e|ando|acao)|oferec(?:er|a|endo)|expand(?:ir|a|indo)|elev(?:ar|e|ando|acao)|invest(?:ir|a|indo))\b/g;
+  const incentive =
+    /\b(?:incentiv\w*|cup(?:om|ons)|promoc\w*|descont\w*|verba\w*|orcamento\w*|anuncio\w*|combos?|frete gratis|brindes?)\b/;
+  return [...text.matchAll(expansion)].some((match) => {
+    const following = text
+      .slice(
+        match.index! + match[0].length,
+        match.index! + match[0].length + 100,
+      )
+      .split(/[.!?;\n]/)[0];
+    if (!incentive.test(following)) return false;
+    const prefix =
+      text
+        .slice(0, match.index)
+        .split(/[.!?;\n]/)
+        .pop() || "";
+    const negated =
+      /\b(?:nao|nunca|jamais|evitar|evite|sem|deixar de|em vez de)\s+(?:(?:deve|devemos|se deve|precisa|podemos|voltar a)\s+)?$/.test(
+        prefix,
+      );
+    const notOnly = /\bnao (?:apenas|so)\s*$/.test(prefix);
+    return !negated || notOnly;
+  });
+}
 export function diagnosticWarnings(d: Diagnostic) {
   const warnings: string[] = [];
   const points = d.sections.flatMap((s) => s.points.map((p) => ({ s, p })));
@@ -91,16 +120,13 @@ export function diagnosticWarnings(d: Diagnostic) {
   const risk = points.some(
     ({ p }) =>
       optionById.get(p.optionId || "")?.tags.includes("margin-risk") ||
-      /margem|roas.*(baixo|negativo)/.test(normalize(p.title)),
+      /margem|roas.*(baixo|negativo)|(baixo|negativo).*roas/.test(
+        normalize(p.title),
+      ),
   );
   if (risk)
     for (const a of d.actions) {
-      const text = normalize(a.description);
-      if (
-        /(aument|ampli|ativ|criar|oferec|expand|elevar|investir)[^.!?\n]{0,100}(incentiv|cupom|promoc|desconto|verba|orcamento|anuncio)/.test(
-          text,
-        )
-      )
+      if (expandsIncentives(a.description))
         warnings.push(
           `Revise a ação “${a.title}”: ela pode ampliar incentivos ou investimento enquanto há risco de margem/ROAS. Valide a margem antes de executar.`,
         );

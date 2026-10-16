@@ -37,7 +37,7 @@ function blocksFor(d: Diagnostic, sizes: Dimensions): Block[] {
   ) => blocks.push({ key, label, node, ...options });
   const summary = executiveSummary(d);
   add(
-    "cover",
+    "cover-head",
     "Visão executiva",
     <div className="dv-cover">
       <div className="dv-kicker">Diagnóstico de entrada · Gestão de lojas</div>
@@ -62,6 +62,13 @@ function blocksFor(d: Diagnostic, sizes: Dimensions): Block[] {
             : "Rascunho — conferência pendente"}
         </div>
       </div>
+    </div>,
+    { group: "cover", keepNext: true },
+  );
+  add(
+    "cover-score",
+    "Visão executiva",
+    <div className="dv-cover">
       <h2>Resumo executivo</h2>
       <p>
         {summary.assessed} de {summary.total} áreas avaliadas, com{" "}
@@ -89,35 +96,52 @@ function blocksFor(d: Diagnostic, sizes: Dimensions): Block[] {
           </div>
         ))}
       </div>
-      <h2>Prioridades de entrada</h2>
-      <div className="dv-priorities">
-        {summary.priorities.map(({ areaId, point, evidence }, i) => (
-          <div key={point.id}>
-            <b className={"dv-priority sev-" + point.severity}>{i + 1}</b>
-            <div>
-              <strong>{point.title}</strong>
-              <p>
-                {areaTitle(areaId)} ·{" "}
-                {evidence.length > 140
-                  ? evidence.slice(0, 140) + "…"
-                  : evidence}
-              </p>
-            </div>
-          </div>
-        ))}
-        {!summary.priorities.length && (
-          <p>
-            Nenhum problema marcado. Manter o acompanhamento das áreas
-            conferidas e concluir as pendentes.
-          </p>
-        )}
-      </div>
-      <p className="dv-method">
-        Faixas e metas são referências editáveis da gestão, não limites oficiais
-        do iFood. Campos sem evidência ou valor permanecem identificados como
-        não informados.
-      </p>
     </div>,
+    { group: "cover" },
+  );
+  add(
+    "cover-priorities-head",
+    "Prioridades de entrada",
+    <h2>Prioridades de entrada</h2>,
+    { group: "cover", keepNext: true },
+  );
+  summary.priorities.forEach(({ areaId, point, evidence }, i) =>
+    add(
+      "cover-priority-" + i,
+      "Prioridades de entrada",
+      <div className="dv-priorities">
+        <div>
+          <b className={"dv-priority sev-" + point.severity}>{i + 1}</b>
+          <div>
+            <strong>{point.title}</strong>
+            <p>
+              {areaTitle(areaId)} ·{" "}
+              {evidence.length > 140 ? evidence.slice(0, 140) + "…" : evidence}
+            </p>
+          </div>
+        </div>
+      </div>,
+      { group: "cover" },
+    ),
+  );
+  if (!summary.priorities.length)
+    add(
+      "cover-no-priorities",
+      "Prioridades de entrada",
+      <p>
+        Nenhum problema marcado. Manter o acompanhamento das áreas conferidas e
+        concluir as pendentes.
+      </p>,
+      { group: "cover" },
+    );
+  add(
+    "cover-method",
+    "Visão executiva",
+    <p className="dv-method">
+      Faixas e metas são referências editáveis da gestão, não limites oficiais
+      do iFood. Campos sem evidência ou valor permanecem identificados como não
+      informados.
+    </p>,
     { group: "cover" },
   );
   if (d.summary)
@@ -299,6 +323,25 @@ function blocksFor(d: Diagnostic, sizes: Dimensions): Block[] {
       { group: "good" },
     );
   }
+  // Adequate-area screenshots remain available at full width, outside the single summary block.
+  good
+    .filter((s) => s.images.length)
+    .forEach((s) => {
+      const group = "annex-" + s.id;
+      add(
+        group + "-head",
+        "Evidências de áreas adequadas",
+        <div className="dv-area-head">
+          <div>
+            <small>Anexo · Área adequada</small>
+            <h2>{areaTitle(s.id)}</h2>
+          </div>
+          <span className="diag-state diag-state-good">✓ Adequado</span>
+        </div>,
+        { group, keepNext: true },
+      );
+      imagesFor(s, group);
+    });
   if (d.actions.length) {
     add(
       "plan-head",
@@ -413,25 +456,6 @@ function blocksFor(d: Diagnostic, sizes: Dimensions): Block[] {
       </div>,
     ),
   );
-  // Adequate-area screenshots remain available at full width, outside the single summary block.
-  good
-    .filter((s) => s.images.length)
-    .forEach((s) => {
-      const group = "annex-" + s.id;
-      add(
-        group + "-head",
-        "Evidências de áreas adequadas",
-        <div className="dv-area-head">
-          <div>
-            <small>Anexo · Área adequada</small>
-            <h2>{areaTitle(s.id)}</h2>
-          </div>
-          <span className="diag-state diag-state-good">✓ Adequado</span>
-        </div>,
-        { group, keepNext: true },
-      );
-      imagesFor(s, group);
-    });
   return blocks;
 }
 export default function DiagnosticDocument({ d }: { d: Diagnostic }) {

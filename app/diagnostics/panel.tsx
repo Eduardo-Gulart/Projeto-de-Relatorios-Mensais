@@ -28,7 +28,8 @@ import {
   areaTitle,
 } from "@/lib/diagnostic-rules";
 import DiagnosticDocument from "./document";
-import { downloadReport } from "@/lib/download";
+import { downloadDiagnostic, printDiagnostic } from "@/lib/diagnostic-download";
+import DiagnosticImageEditor from "./image-editor";
 import "./diagnostics.css";
 export default function DiagnosticPanel() {
   const [d, setD] = useState<Diagnostic>(newDiagnostic),
@@ -38,10 +39,28 @@ export default function DiagnosticPanel() {
     [message, setMessage] = useState(""),
     [dirty, setDirty] = useState(false),
     [preview, setPreview] = useState(false);
+  const [imageEdit, setImageEdit] = useState<{
+    src: string;
+    areaId: string;
+    index?: number;
+  } | null>(null);
+  function closeImageEditor() {
+    if (imageEdit?.src.startsWith("blob:")) URL.revokeObjectURL(imageEdit.src);
+    setImageEdit(null);
+  }
   const summary = executiveSummary(d);
   const warnings = diagnosticWarnings(d);
   function change(p: Partial<Diagnostic>) {
-    setD((v) => ({ ...v, ...p, reviewed: p.reviewed ?? false }));
+    setD((v) => ({
+      ...v,
+      ...p,
+      actions:
+        p.actions ||
+        (p.manager !== undefined
+          ? v.actions.map((a) => ({ ...a, owner: a.owner || p.manager! }))
+          : v.actions),
+      reviewed: p.reviewed ?? false,
+    }));
     setDirty(true);
   }
   async function load() {
@@ -150,7 +169,12 @@ export default function DiagnosticPanel() {
       setBusy(false);
     }
   }
-  async function upload(areaId: string, file: File) {
+  async function upload(
+    areaId: string,
+    file: File,
+    metadata: { width: number; height: number; redacted: boolean },
+    index?: number,
+  ) {
     setBusy(true);
     try {
       const form = new FormData();
@@ -166,32 +190,44 @@ export default function DiagnosticPanel() {
       };
       if (!r.ok) throw Error(result.error);
       const area = d.sections.find((s) => s.id === areaId)!;
+      const image = {
+        url: result.url,
+        caption: index === undefined ? "" : area.images[index].caption,
+        pointIds: area.points.map((p) => p.id),
+        ...metadata,
+        redacted:
+          metadata.redacted ||
+          (index !== undefined && area.images[index].redacted),
+      };
       editArea(areaId, {
-        images: [
-          ...area.images,
-          {
-            url: result.url,
-            caption: "",
-            pointIds: area.points.map((p) => p.id),
-          },
-        ],
+        images:
+          index === undefined
+            ? [...area.images, image]
+            : area.images.map((old, i) => (i === index ? image : old)),
       });
+      closeImageEditor();
       setMessage(
         "Print anexado. Salve o diagnóstico para guardar a alteração.",
       );
     } catch (e) {
       setMessage((e as Error).message);
+      throw e;
     } finally {
       setBusy(false);
     }
   }
-  async function pdf() {
+  async function pdf(vector = false) {
     setBusy(true);
     try {
-      const file = await downloadReport(
-        "Diagnostico-" + d.store,
-        "#diagnostic-document",
-      );
+      const root = document.getElementById("diagnostic-document")!;
+      if (vector) {
+        await printDiagnostic(root);
+        setMessage(
+          "Na janela de impressão, escolha Salvar como PDF. Desative os cabeçalhos e rodapés do navegador.",
+        );
+        return;
+      }
+      const file = await downloadDiagnostic("Diagnostico-" + d.store, root);
       const a = document.createElement("a");
       a.href = file.url;
       a.download = file.filename;
@@ -218,8 +254,9 @@ export default function DiagnosticPanel() {
             type="number"
             step="any"
             value={
-              point.observed !== "" && Number.isFinite(Number(point.observed))
-                ? point.observed
+              point.observed !== "" &&
+              Number.isFinite(Number(point.observed.replace(",", ".")))
+                ? point.observed.replace(",", ".")
                 : ""
             }
             placeholder="Opcional"
@@ -275,8 +312,9 @@ export default function DiagnosticPanel() {
             type="number"
             step="any"
             value={
-              point.target !== "" && Number.isFinite(Number(point.target))
-                ? point.target
+              point.target !== "" &&
+              Number.isFinite(Number(point.target.replace(",", ".")))
+                ? point.target.replace(",", ".")
                 : ""
             }
             placeholder="A definir"
@@ -307,6 +345,15 @@ export default function DiagnosticPanel() {
         <p role="status" className="notice">
           {message}
         </p>
+      )}
+      {imageEdit && (
+        <DiagnosticImageEditor
+          src={imageEdit.src}
+          onCancel={closeImageEditor}
+          onSave={(file, meta) =>
+            upload(imageEdit.areaId, file, meta, imageEdit.index)
+          }
+        />
       )}
       <div className="diag-work-grid">
         <aside className="panel diag-history">
@@ -365,9 +412,21 @@ export default function DiagnosticPanel() {
                 Salvar cópia
               </button>
               {preview && (
-                <button disabled={busy || !diagnosticReady(d)} onClick={pdf}>
-                  Gerar PDF do diagnóstico
-                </button>
+                <>
+                  <button
+                    disabled={busy || !diagnosticReady(d)}
+                    onClick={() => pdf(true)}
+                  >
+                    Imprimir / salvar PDF
+                  </button>
+                  <button
+                    className="secondary"
+                    disabled={busy || !diagnosticReady(d)}
+                    onClick={() => pdf(false)}
+                  >
+                    Baixar PDF compatível
+                  </button>
+                </>
               )}
             </div>
             <small>
@@ -658,7 +717,11 @@ export default function DiagnosticPanel() {
                           disabled={s.images.length >= 6}
                           onChange={(e) => {
                             const file = e.target.files?.[0];
-                            if (file) void upload(s.id, file);
+                            if (file)
+                              setImageEdit({
+                                src: URL.createObjectURL(file),
+                                areaId: s.id,
+                              });
                             e.target.value = "";
                           }}
                         />
@@ -679,6 +742,18 @@ export default function DiagnosticPanel() {
                             Print {i + 1} · {image.pointIds.length} pontos
                             vinculados
                           </span>
+                          <button
+                            className="secondary"
+                            onClick={() =>
+                              setImageEdit({
+                                src: image.url,
+                                areaId: s.id,
+                                index: i,
+                              })
+                            }
+                          >
+                            Recortar / ocultar dados
+                          </button>
                           <button
                             className="secondary"
                             onClick={() =>

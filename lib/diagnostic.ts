@@ -147,11 +147,17 @@ export function updateSection(
   const next = { ...s, ...patch };
   if (next.points.length) next.checked = false;
   next.status = statusForSection(next);
+  const addedIds = next.points
+    .filter((point) => !s.points.some((old) => old.id === point.id))
+    .map((point) => point.id);
   next.images = next.images.map((image) => ({
     ...image,
-    pointIds: image.pointIds.filter((id) =>
-      next.points.some((p) => p.id === id),
-    ),
+    pointIds: [
+      ...new Set([
+        ...image.pointIds.filter((id) => next.points.some((p) => p.id === id)),
+        ...addedIds,
+      ]),
+    ],
   }));
   return next;
 }
@@ -338,7 +344,13 @@ export function normalizeDiagnostic(input: unknown): Diagnostic {
     const s = d.sections.find((s) => s.id === oldSection.id);
     if (!s) throw Error("Área antiga desconhecida: " + oldSection.id);
     for (const [index, text] of oldSection.checks.entries()) {
-      const optionId = textToOptionId.get(text);
+      const mappedId = textToOptionId.get(text);
+      // V1 accepted arbitrary text per area; keep misplaced labels as custom points.
+      const optionId = diagnosticCatalog
+        .find((area) => area.id === s.id)
+        ?.options.some((option) => option.id === mappedId)
+        ? mappedId
+        : undefined;
       const point =
         optionId && !s.points.some((p) => p.id === optionId)
           ? pointFromOption(optionId)

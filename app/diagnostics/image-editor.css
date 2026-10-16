@@ -1,0 +1,106 @@
+.diag-picture-editor {
+  margin: 20px 0;
+  padding: 20px;
+  border: 1px solid #d9cee6;
+  border-radius: 16px;
+  background: #fff;
+  color: #242036;
+}
+.diag-picture-heading,
+.diag-picture-tools,
+.diag-picture-save {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.diag-picture-heading h4 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+.diag-picture-heading p,
+.diag-picture-instructions,
+.diag-picture-save p {
+  margin: 0;
+  color: #51465f;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.diag-picture-heading > div {
+  flex: 1 1 320px;
+}
+.diag-picture-tools {
+  justify-content: flex-start;
+  margin: 16px 0;
+}
+.diag-picture-tools span,
+.diag-picture-status {
+  font-size: 12px;
+  color: #51465f;
+}
+.diag-picture-editor button:focus-visible,
+.diag-picture-editor input:focus-visible {
+  outline: 3px solid #820ad1;
+  outline-offset: 3px;
+}
+.diag-picture-editor button[aria-pressed="true"] {
+  background: #820ad1;
+  color: #fff;
+  border-color: #820ad1;
+}
+.diag-picture-canvas {
+  padding: 10px;
+  margin: 14px 0;
+  background: #eeebf3;
+  border-radius: 12px;
+  max-height: 70vh;
+  overflow: auto;
+}
+.diag-picture-canvas canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  cursor: crosshair;
+  touch-action: none;
+  background: #fff;
+}
+.diag-picture-selection {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.diag-picture-selection label {
+  font-size: 12px;
+  color: #51465f;
+}
+.diag-picture-selection input {
+  min-width: 0;
+  width: 100%;
+}
+.diag-picture-error {
+  padding: 12px;
+  background: #fcebeb;
+  border-left: 3px solid #791f1f;
+  color: #791f1f;
+  font-size: 13px;
+}
+.diag-picture-save {
+  padding-top: 16px;
+  border-top: 1px solid #e8e4ef;
+}
+.diag-picture-save p {
+  flex: 1 1 280px;
+  max-width: 600px;
+}
+@media (max-width: 640px) {
+  .diag-picture-editor {
+    padding: 14px;
+  }
+  .diag-picture-selection {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .diag-picture-save button {
+    width: 100%;
+  }
+}

@@ -96,5 +96,28 @@ describe("regras do diagnóstico", () => {
     );
     d.actions[0].description = "Reduzir os incentivos e revisar a margem";
     expect(diagnosticWarnings(d)).toEqual([]);
+    for (const description of [
+      "Desativar promoções sem margem",
+      "Não aumentar os descontos",
+      "Evitar ativar promoções antes de calcular a margem",
+      "Não devemos ampliar o orçamento de anúncios",
+      "Reduzir os descontos em vez de aumentar os incentivos",
+    ]) {
+      d.actions[0].description = description;
+      expect(diagnosticWarnings(d), description).toEqual([]);
+    }
+    for (const description of [
+      "Criar cupons para novos clientes",
+      "Reativar promoções desativadas",
+      "Oferecer frete grátis",
+      "Não reduzir os anúncios; aumentar o orçamento",
+      "Não apenas aumentar os anúncios, mas revisar os produtos",
+    ]) {
+      d.actions[0].description = description;
+      expect(
+        diagnosticWarnings(d).some((w) => w.includes("margem/ROAS")),
+        description,
+      ).toBe(true);
+    }
   });
 });
