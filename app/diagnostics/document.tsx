@@ -376,7 +376,12 @@ function blocksFor(d: Diagnostic, sizes: Dimensions): Block[] {
           {columns.map((col, i) => {
             const item = col[row];
             return (
-              <div className="dv-plan-cell" key={i}>
+              <div
+                className={
+                  "dv-plan-cell" + (!item && row > 0 ? " dv-plan-empty" : "")
+                }
+                key={i}
+              >
                 <small>{[7, 30, 60][i]} dias</small>
                 {item ? (
                   <>

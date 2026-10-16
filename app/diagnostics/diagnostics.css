@@ -1173,3 +1173,10 @@
 .diag-executive li p {
   margin: 4px 0;
 }
+
+.diag-v2 .diag-flow-block[data-diag-block^="cover-"] {
+  padding-bottom: 5px;
+}
+.diag-v2 .dv-plan-empty {
+  visibility: hidden;
+}
