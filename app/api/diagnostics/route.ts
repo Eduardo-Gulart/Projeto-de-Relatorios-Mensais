@@ -1,6 +1,6 @@
 import { access, AccessError } from "@/lib/team";
 import { database, bucket, sameOrigin, fail } from "@/lib/storage";
-import { diagnosticSchema, diagnosticReady } from "@/lib/diagnostic";
+import { diagnosticReady, normalizeDiagnostic } from "@/lib/diagnostic";
 export async function GET(req: Request) {
   try {
     const a = await access(req);
@@ -12,7 +12,7 @@ export async function GET(req: Request) {
       .all<{ payload: string; updated: string }>();
     return Response.json(
       rows.results.map((r) => ({
-        ...JSON.parse(r.payload),
+        ...normalizeDiagnostic(JSON.parse(r.payload)),
         updated: r.updated,
       })),
       { headers: { "Cache-Control": "private, no-store" } },
@@ -26,12 +26,17 @@ export async function POST(req: Request) {
     sameOrigin(req);
     const a = await access(req);
     const body = await req.text();
-    if (body.length > 100000)
+    if (new TextEncoder().encode(body).length > 750000)
       throw new AccessError(413, "Diagnóstico muito grande.");
-    const parsed = diagnosticSchema.safeParse(JSON.parse(body));
-    if (!parsed.success)
-      throw new AccessError(400, "Confira os campos e limites do diagnóstico.");
-    const d = parsed.data;
+    let d;
+    try {
+      d = normalizeDiagnostic(JSON.parse(body));
+    } catch {
+      throw new AccessError(
+        400,
+        "Confira os campos, vínculos e status do diagnóstico.",
+      );
+    }
     if (d.reviewed && !diagnosticReady(d))
       throw new AccessError(
         400,
